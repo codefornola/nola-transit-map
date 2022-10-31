@@ -1,0 +1,21 @@
+{
+  "name": "nola-transit-map",
+  "version": "1.0.0",
+  "description": "This program scrapes vehicle locations from Clever Devices' bustime product https://www.cleverdevices.com/products/bustime/ which the New Orleans RTA uses to track their bus and streetcar fleet. It scrapes all the locations in the fleet and puts them into a sqlite database.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild app/main.jsx --minify --loader:.png=dataurl --bundle --outfile=public/app.js",
+    "watch": "esbuild app/main.jsx --minify --loader:.png=dataurl --bundle --outfile=public/app.js --watch"
+  },
+  "private": true,
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.15.12",
+    "leaflet": "^1.9.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.1.0"
+  }
+}
