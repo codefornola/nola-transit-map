@@ -1,4 +1,4 @@
-module github.com/bhelx/bustime
+module github.com/codefornola/nola-transit-map
 
 go 1.14
 

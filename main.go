@@ -225,6 +225,10 @@ func (b *VehicleBroadcaster) Register(c VehicleChannel) {
 	b.receivers[c] = true
 }
 
+func (b *VehicleBroadcaster) Unregister(c VehicleChannel) {
+	delete(b.receivers, c)
+}
+
 func (b *VehicleBroadcaster) Start() {
 	//config := bustime.GetConfig()
 	scraper := NewScraper()
@@ -246,10 +250,10 @@ func (b *VehicleBroadcaster) broadcast() {
 			default:
 				log.Println("Closing")
 				close(r)
-				delete(b.receivers, r)
+				b.Unregister(r)
 			}
 		}
-		log.Println("Done Broadcsting")
+		log.Println("Done Broadcasting")
 	}
 }
 
@@ -295,20 +299,21 @@ func (s *Server) reader(ws *websocket.Conn) {
 	}
 }
 
-func (s *Server) writeVehicles(ws *websocket.Conn, vehicles []Vehicle) {
+func (s *Server) writeVehicles(ws *websocket.Conn, vehicles []Vehicle) error {
 	if len(vehicles) > 0 {
 		payload, err := json.Marshal(vehicles)
 		if err != nil {
-			log.Println(err)
+			return err
 		}
 		ws.SetWriteDeadline(time.Now().Add(writeWait))
 		err = ws.WriteMessage(websocket.TextMessage, payload)
 		if err != nil {
-			log.Println(err)
+			return err
 		}
 	} else {
 		log.Println("No Vehicles to write")
 	}
+	return nil
 }
 
 func (s *Server) writer(ws *websocket.Conn) {
@@ -324,8 +329,12 @@ func (s *Server) writer(ws *websocket.Conn) {
 	s.writeVehicles(ws, s.broadcaster.vehicles)
 
 	for vehicles := range vehicleChan {
-		s.writeVehicles(ws, vehicles)
+		err := s.writeVehicles(ws, vehicles)
+		if err != nil {
+			break
+		}
 	}
+	log.Println("Got close. Stopping WS writer")
 }
 
 func (s *Server) serveWs(w http.ResponseWriter, r *http.Request) {
