@@ -2,6 +2,7 @@
 <html lang="en">
     <head>
         <title>NOLA Transit Map</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css"
 		integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14="
 		crossorigin=""/>
@@ -12,8 +13,14 @@
 			}
 		</script>
 		<style>
-			#main { width: 100%; height: 800px; }
-			.leaflet-container { width: 100%; height: 800px; }
+			body {
+				padding: 0;
+				margin: 0;
+			}
+			html, body, #main, .leaflet-container {
+				height: 100%;
+				width: 100vw;
+			}
 		</style>
     </head>
     <body>
