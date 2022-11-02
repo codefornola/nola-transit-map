@@ -8,10 +8,9 @@ This map is just a stop gap to get the data out to people again.
 
 ### Needs to be done
 
-* overlay the route lines (this can be pulled from nolabase)
-* allow someone to select a route or multiple routes (we need some kind of collapsable nav bar for this i think). Need a multi-select.
-* somehow communicate the staleness of the data to the user
+* somehow communicate the staleness of the data to the user (we have a status indicator for the connection but could use the vehicle timestamps)
 * nice icons and popups for the vehicles
+* show the user's location on the map
 
 ### Developing
 
