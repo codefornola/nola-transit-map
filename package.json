@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "esbuild app/main.jsx --minify --loader:.png=dataurl --bundle --outfile=public/app.js",
-    "watch": "esbuild app/main.jsx --minify --loader:.png=dataurl --bundle --outfile=public/app.js --watch"
+    "build": "esbuild app/main.jsx --minify --loader:.svg=dataurl --bundle --outfile=public/app.js",
+    "watch": "esbuild app/main.jsx --loader:.svg=dataurl --bundle --outfile=public/app.js --watch"
   },
   "private": true,
   "author": "",
@@ -14,6 +14,7 @@
   "dependencies": {
     "esbuild": "^0.15.12",
     "leaflet": "^1.9.2",
+    "leaflet-rotatedmarker": "^0.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.1.0"

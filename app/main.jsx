@@ -1,6 +1,47 @@
-import React from 'react'
+import React, {useRef, useEffect, forwardRef} from 'react'
 import {createRoot} from 'react-dom/client';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup} from 'react-leaflet'
+import L from 'leaflet';
+import "leaflet-rotatedmarker";
+
+const iconVehicle = new L.Icon({
+    iconUrl: require('../img/arrow.svg'),
+    iconRetinaUrl: require('../img/arrow.svg'),
+    iconAnchor: null,
+    popupAnchor: null,
+    shadowUrl: null,
+    shadowSize: null,
+    shadowAnchor: null,
+    iconSize: new L.Point(24, 24),
+    className: 'leaflet-div-icon'
+});
+
+const RotatedMarker = forwardRef(({ children, ...props }, forwardRef) => {
+    const markerRef = useRef();
+  
+    const { rotationAngle, rotationOrigin } = props;
+    useEffect(() => {
+      const marker = markerRef.current;
+      if (marker) {
+        marker.setRotationAngle(rotationAngle);
+        marker.setRotationOrigin(rotationOrigin);
+      }
+    }, [rotationAngle, rotationOrigin]);
+  
+    return (
+      <Marker
+        ref={(ref) => {
+          markerRef.current = ref;
+          if (forwardRef) {
+            forwardRef.current = ref;
+          }
+        }}
+        {...props}
+      >
+        {children}
+      </Marker>
+    );
+  });
 
 
 class MainMap extends React.Component {
@@ -24,7 +65,8 @@ class MainMap extends React.Component {
             console.log('onmessage');
             if (!this.state.connected) this.setState({connected: true})
             const vehicles = JSON.parse(evt.data)
-            console.dir(vehicles)
+            //console.dir(vehicles)
+            console.dir(vehicles.map(v => v.hdg))
             this.setState({vehicles})
         }
     }
@@ -33,11 +75,12 @@ class MainMap extends React.Component {
         return this.state.vehicles
             .map(v => {
                 const coords = [v.lat, v.lon].map(parseFloat) 
-                return <Marker key={v.vid} position={coords}>
+                const rotAng = parseInt(v.hdg, 10)
+                return <RotatedMarker key={v.vid} position={coords} icon={iconVehicle} rotationAngle={rotAng} rotationOrigin="center">
                     <Popup>
                         { v.rt + " - " + v.des + " - " + v.tmstmp}
                     </Popup>
-                </Marker>
+                </RotatedMarker>
             })
     }
 
