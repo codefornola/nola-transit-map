@@ -65,8 +65,7 @@ class MainMap extends React.Component {
             console.log('onmessage');
             if (!this.state.connected) this.setState({connected: true})
             const vehicles = JSON.parse(evt.data)
-            //console.dir(vehicles)
-            console.dir(vehicles.map(v => v.hdg))
+            console.dir(vehicles)
             this.setState({vehicles})
         }
     }

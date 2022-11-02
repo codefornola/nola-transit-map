@@ -8,11 +8,10 @@ This map is just a stop gap to get the data out to people again.
 
 ### Needs to be done
 
-* make it mobile friendly
 * overlay the route lines (this can be pulled from nolabase)
-* allow someone to select a route or multiple routes (we need some kind of collapsable nav bar for this i think)
-* show an arrow pointing the direction of the vehicles (heading)
+* allow someone to select a route or multiple routes (we need some kind of collapsable nav bar for this i think). Need a multi-select.
 * somehow communicate the staleness of the data to the user
+* nice icons and popups for the vehicles
 
 ### Developing
 
