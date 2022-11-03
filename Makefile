@@ -1,4 +1,5 @@
 CLEVER_DEVICES_KEY?=""
+CLEVER_DEVICES_IP?=""
 
 build:
 	npm run build

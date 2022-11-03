@@ -154,10 +154,14 @@ func NewScraper() *Scraper {
 	if !ok {
 		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
 	}
+	ip, ok := os.LookupEnv("CLEVER_DEVICES_IP")
+	if !ok {
+		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
+	}
 
 	config := &Config{
-		Url:      "http://72.158.203.4/bustime/api/v3/getvehicles",
-		Interval: 5 * time.Second,
+		Url:      fmt.Sprintf("http://%s/bustime/api/v3/getvehicles", ip),
+		Interval: 10 * time.Second,
 		Key:      api_key,
 	}
 	tr := &http.Transport{

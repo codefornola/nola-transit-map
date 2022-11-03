@@ -31,7 +31,7 @@ make build
 To run:
 
 ```
-make run CLEVER_DEVICES_KEY=thekey
+make run CLEVER_DEVICES_KEY=thekey CLEVER_DEVICES_IP=ipaddr
 ```
 
 Open the frontend [http://localhost:8080](http://localhost:8080)

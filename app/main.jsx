@@ -250,8 +250,8 @@ class App extends React.Component {
     }
 
     lagging() {
-        // lagging by over 7 seconds
-        return Math.floor((this.state.now - this.state.lastUpdate) / 1000) > 7
+        // lagging by over 13 seconds
+        return Math.floor((this.state.now - this.state.lastUpdate) / 1000) > 13
     }
 
     render() {
