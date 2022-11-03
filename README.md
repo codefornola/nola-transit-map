@@ -3,8 +3,7 @@
 Realtime map of all New Orleans public transit vehicles (streetcars and busses). You can view the map here for the time being: [https://nolatransit.fly.dev/](https://nolatransit.fly.dev/)
 
 For some reason, going from the old RTA app to the new Le Pass app has resulted in the loss of realtime functionality. Not having realtime makes
-getting around the city extremely frustrating. Fortunately I reverse engineered the old app a few years ago and have access to the raw real-time stream.
-This map is just a stop gap to get the data out to people again.
+getting around the city extremely frustrating. This map is just a stop gap to get the data out to people again.
 
 ### Needs to be done
 
