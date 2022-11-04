@@ -259,7 +259,7 @@ class App extends React.Component {
         if (this.state.connected && this.lagging()) connectionStatus = "⚠"
         return <div className="App">
             <header>
-                <Nav fill variant="pills" defaultActiveKey="map" onSelect={this.onTabSelect.bind(this)}>
+                <Nav fill variant="pills" className="Nav-container" defaultActiveKey="map" onSelect={this.onTabSelect.bind(this)}>
                     <Nav.Item>
                         <Nav.Link eventKey="map">Map</Nav.Link>
                     </Nav.Item>

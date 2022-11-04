@@ -1,0 +1,9 @@
+.App {
+    display: flex;
+}
+
+/* Navigation */
+.Nav-container {
+    display: flex;
+    flex-direction: row;
+}
