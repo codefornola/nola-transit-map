@@ -2,6 +2,8 @@
     --primary: #7A278D;
     --primary_darker: #610C75;
     --success: #72B01D;
+    --error: #EA3546;
+    --alert: #FFC100;
 }
 
 .control-bar {
@@ -11,32 +13,13 @@
     display: flex;
     color: white;
     position: absolute;
-    width: 35vw;
+    min-width: 35vw;
     z-index: 1000;
     border-radius: 0 0 4px 0px;
 }
 
-@media (min-width: 1400px) {
-    .control-bar {
-        width: 30vw;
-    }
-}
-
-@media (max-width: 1100px) {
-    .control-bar {
-        width: 45vw;
-    }
-}
-
-@media (max-width: 500px) {
-    .control-bar {
-        width: 100vw;
-    }
-}
-
 
 .control-bar svg {
-    color: var(--success);
     margin-right: 0.5rem;
 }
 
@@ -51,7 +34,37 @@
     padding: 0.75rem 1rem;
 }
 
+.control-bar__connection-container.connected svg {
+    color: var(--success);
+}
+
+.control-bar__connection-container.not-connected svg {
+    color: var(--error);
+}
+
+.control-bar__connection-container.trouble-connecting svg {
+    color: var(--alert);
+}
+
 .route-filter {
     margin-left: 1rem;
     color: black;
+}
+
+@media (min-width: 1400px) {
+    .control-bar {
+        min-width: 30vw;
+    }
+}
+
+@media (max-width: 1100px) {
+    .control-bar {
+        min-width: 45vw;
+    }
+}
+
+@media (max-width: 500px) {
+    .control-bar {
+        min-width: 100vw;
+    }
 }
