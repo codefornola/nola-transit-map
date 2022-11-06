@@ -1,19 +1,54 @@
 :root {
-    --primary: #7A278D; 
+    --primary: #7A278D;
+    --primary_darker: #610C75;
+    --success: #72B01D;
 }
 
 .control-bar {
+    align-items: center;
     background: var(--primary);
+    justify-content: space-between;
+    display: flex;
     color: white;
-    padding: 0.75rem;
     position: absolute;
-    width: 30vw;
+    width: 35vw;
     z-index: 1000;
+    border-radius: 0 0 4px 0px;
+}
+
+@media (min-width: 1400px) {
+    .control-bar {
+        width: 30vw;
+    }
+}
+
+@media (max-width: 1100px) {
+    .control-bar {
+        width: 45vw;
+    }
+}
+
+@media (max-width: 500px) {
+    .control-bar {
+        width: 100vw;
+    }
+}
+
+
+.control-bar svg {
+    color: var(--success);
+    margin-right: 0.5rem;
 }
 
 .control-bar__filter-label {
     align-items: center;
     display: flex;
+    padding: 0.75rem 1rem;
+}
+
+.control-bar__connection-container {
+    border-left: solid 1px var(--primary_darker);
+    padding: 0.75rem 1rem;
 }
 
 .route-filter {

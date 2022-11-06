@@ -1,19 +1,17 @@
 import React, { useRef, useEffect, forwardRef } from 'react'
 import { createRoot } from 'react-dom/client';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
-import { BsMapFill, BsInfoLg } from 'react-icons/bs'
+import { BsMapFill, BsInfoLg, BsFillCircleFill, BsWifiOff } from 'react-icons/bs'
 import { BiBus } from 'react-icons/bi'
 import L from 'leaflet';
 import "leaflet-rotatedmarker";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NortaGeoJson from '../data/routes.json';
-import Nav from 'react-bootstrap/Nav';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Select from 'react-select'
 import makeAnimated from 'react-select/animated';
-import { RouteFilter } from './route_filter.jsx'
 
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
@@ -158,6 +156,16 @@ class App extends React.Component {
     }
 
     buildControlBar() {
+        let connectionStatus = this.state.connected 
+            ? <React.Fragment>
+                <span class="control-bar__connection-container"><BsFillCircleFill /> Connected</span>
+              </React.Fragment> 
+            : <React.Fragment>
+                <span class="control-bar__connection-container"><BsWifiOff /> Not Connected</span>
+              </React.Fragment>
+
+        if (this.state.connected && this.lagging()) connectionStatus = "⚠ Trouble Connecting"
+
         if (!this.state.connected) return this.notConnectedScreen()
 
         if (this.state.vehicles.length === 0) {
@@ -187,6 +195,7 @@ class App extends React.Component {
                             placeholder="Select Route(s)"
                         />
                     </label>
+                    {connectionStatus}
         </div>
     }
 
@@ -240,8 +249,6 @@ class App extends React.Component {
     }
 
     render() {
-        let connectionStatus = this.state.connected ? "✅" : "❌"
-        if (this.state.connected && this.lagging()) connectionStatus = "⚠"
         return <div className="App">
             <main>
                 {this.buildControlBar()}
