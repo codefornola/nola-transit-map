@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, forwardRef } from 'react'
 import { createRoot } from 'react-dom/client';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
+import { BsMapFill, BsInfoLg } from 'react-icons/bs'
+import { BiBus } from 'react-icons/bi'
 import L from 'leaflet';
 import "leaflet-rotatedmarker";
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -11,6 +13,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Select from 'react-select'
 import makeAnimated from 'react-select/animated';
+import { RouteFilter } from './route_filter.jsx'
 
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
@@ -136,7 +139,7 @@ class App extends React.Component {
     mapContainer() {
         if (!this.state.connected) return this.notConnectedScreen()
 
-        return <MapContainer center={[29.95569, -90.0786107]} zoom={13}>
+        return <MapContainer center={[29.95569, -90.0786107]} zoom={13} zoomControl={false}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -154,7 +157,7 @@ class App extends React.Component {
         </Row>
     }
 
-    settingsContainer() {
+    buildControlBar() {
         if (!this.state.connected) return this.notConnectedScreen()
 
         if (this.state.vehicles.length === 0) {
@@ -170,28 +173,21 @@ class App extends React.Component {
             return { value: r, label: r }
         })
 
-        return <Container>
-            <Row className="justify-content-md-center">
-                <Col md="auto">
-                    <h3>Select routes to show on map</h3>
-                    <p>You can select multiple routes</p>
-                </Col>
-            </Row>
-            <Row className="justify-content-md-center">
-                <Col md="auto">
-                    <Select
-                        closeMenuOnSelect={false}
-                        components={animatedComponents}
-                        defaultValue={[]}
-                        value={this.state.routes}
-                        isMulti
-                        options={routeOptions}
-                        onChange={this.handleRouteChange}
-                    />
-                </Col>
-            </Row>
-
-        </Container>
+        return <div class="control-bar">
+                    <label class="control-bar__filter-label">Filter Routes:
+                        <Select
+                            closeMenuOnSelect={false}
+                            components={animatedComponents}
+                            defaultValue={[]}
+                            value={this.state.routes}
+                            isMulti
+                            options={routeOptions}
+                            onChange={this.handleRouteChange}
+                            className="route-filter"
+                            placeholder="Select Route(s)"
+                        />
+                    </label>
+        </div>
     }
 
     aboutContainer() {
@@ -238,17 +234,6 @@ class App extends React.Component {
         localStorage.setItem("routes", JSON.stringify(routes))
     }
 
-    content() {
-        switch (this.state.tab) {
-            case "about":
-                return this.aboutContainer()
-            case "settings":
-                return this.settingsContainer()
-            default:
-                return this.mapContainer()
-        }
-    }
-
     lagging() {
         // lagging by over 13 seconds
         return Math.floor((this.state.now - this.state.lastUpdate) / 1000) > 13
@@ -258,25 +243,9 @@ class App extends React.Component {
         let connectionStatus = this.state.connected ? "✅" : "❌"
         if (this.state.connected && this.lagging()) connectionStatus = "⚠"
         return <div className="App">
-            <header>
-                <Nav fill variant="pills" className="Nav-container" defaultActiveKey="map" onSelect={this.onTabSelect.bind(this)}>
-                    <Nav.Item>
-                        <Nav.Link eventKey="map">Map</Nav.Link>
-                    </Nav.Item>
-                    <Nav.Item>
-                        <Nav.Link eventKey="settings">Routes</Nav.Link>
-                    </Nav.Item>
-                    <Nav.Item>
-                        <Nav.Link eventKey="about">About</Nav.Link>
-                    </Nav.Item>
-                    <Nav.Item>
-                        {/* <Nav.Link eventKey="meta" disabled >{timeSince(this.state.lastUpdate, this.state.now)}</Nav.Link> */}
-                        <Nav.Link eventKey="meta" disabled>{connectionStatus}</Nav.Link>
-                    </Nav.Item>
-                </Nav>
-            </header>
             <main>
-                {this.content()}
+                {this.buildControlBar()}
+                {this.mapContainer()}
             </main>
         </div>
     }
