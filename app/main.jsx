@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, forwardRef } from 'react'
 import { createRoot } from 'react-dom/client';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
-import { BsMapFill, BsInfoLg, BsFillCircleFill, BsFillCloudSlashFill, BsFillExclamationTriangleFill } from 'react-icons/bs'
+import { BsMapFill, BsInfoLg, BsFillCircleFill, BsFillCloudSlashFill, BsFillExclamationTriangleFill, BsInfoCircleFill } from 'react-icons/bs'
 import { BiBus } from 'react-icons/bi'
 import L from 'leaflet';
 import "leaflet-rotatedmarker";
@@ -256,6 +256,10 @@ class App extends React.Component {
             <main>
                 {this.buildControlBar()}
                 {this.mapContainer()}
+                <button className="about-button">
+                    <BsInfoCircleFill />
+                    About this project
+                </button>
             </main>
         </div>
     }
