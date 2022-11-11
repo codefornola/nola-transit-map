@@ -136,8 +136,6 @@ class App extends React.Component {
     }
 
     mapContainer() {
-        if (!this.state.connected) return this.notConnectedScreen()
-
         return <MapContainer center={[29.95569, -90.0786107]} zoom={13} zoomControl={false}>
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -203,28 +201,6 @@ class App extends React.Component {
         </div>
     }
 
-    generateAboutModal() {
-        return <Modal.Dialog>
-                <Modal.Header closeButton>
-                    <Modal.title>NOLA Transit Map</Modal.title>
-               </Modal.Header>
-               <Modal.Body>
-                <p>Created by <a href="https://codeforneworleans.org/">Code For New Orleans</a></p>
-                <h2>About</h2>
-                    <p>
-                        When the RTA switched to the new LePass app, all of the realtime data
-                        stopped working. Relying on public transportation in New Orleans without this data is extremely challenging.
-                        We made this map as a stop gap until realtime starts working again.
-
-                        If you find an problem, or have a feature request, consider <a href="https://github.com/codefornola/nola-transit-map/issues">filing an issue here</a>.
-                        You can also join us on slack in the #civic-hacking channel of the <a href="https://join.slack.com/t/nola/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ">Nola Devs slack</a>.
-
-                        Take a look at <a href="https://github.com/codefornola/nola-transit-map">the README on GitHub</a> to learn more about how it works.
-                    </p>
-                </Modal.Body>
-        </Modal.Dialog>
-    }
-
     onTabSelect(eventKey) {
         this.setState({ tab: eventKey });
     }
@@ -244,21 +220,17 @@ class App extends React.Component {
             <main>
                 {this.buildControlBar()}
                 {this.mapContainer()}
-                {/* <button onClick={this.generateAboutModal} className="about-button">
-                    <BsInfoCircleFill />
-                    About this project
-                </button> */}
                 <CustomModal
                     title='NOLA Transit Map'
                     subtitle={['Created by ', <a href="https://codeforneworleans.org/"> Code For New Orleans</a>]}
-                    buttonText="About this project"
+                    buttonText={[<BsInfoLg />, 'About this project']}
                     content={
                         [
                             'When the RTA switched to the new LePass app, all of the realtime data stopped working. Relying on public transportation in New Orleans without this data is extremely challenging. We made this map as a stop gap until realtime starts working again.',
                             
-                            'If you find an problem, or have a feature request, consider ', <a href="https://github.com/codefornola/nola-transit-map/issues">filing an issue here.</a>,
-                            'You can also join us on slack in the #civic-hacking channel of the ', <a href="https://join.slack.com/t/nola/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ">Nola Devs slack.</a>,
-                            'Take a look at ', <a href="https://github.com/codefornola/nola-transit-map">the README on GitHub</a>, ' to learn more about how it works.'
+                            <br></br>,<br></br>, 'If you find an problem, or have a feature request, consider ', <a href="https://github.com/codefornola/nola-transit-map/issues">filing an issue here.</a>,
+                            ' You can also join us on slack in the #civic-hacking channel of the ', <a href="https://join.slack.com/t/nola/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ">Nola Devs slack.</a>,
+                            ' Take a look at ', <a href="https://github.com/codefornola/nola-transit-map">the README on GitHub</a>, ' to learn more about how it works.'
                         ]
                     }
                 />

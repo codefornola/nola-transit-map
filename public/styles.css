@@ -3,7 +3,8 @@
     --primary_darker: #610C75;
     --secondary_lighter: #02205C91;
     --secondary: #02205c;
-    --secondary_darker: #00040b;
+    --secondary_darker: #01153c;
+    --secondary_darkest: #00040b;
     --black: #111;
     --black_lighter: #00000094;
     --success: #72B01D;
@@ -37,6 +38,7 @@
 .control-bar__connection-container {
     border-left: solid 1px var(--primary_darker);
     padding: 0.75rem 1rem;
+    font-weight: 600;
 }
 
 .control-bar__connection-container.connected svg {
@@ -57,17 +59,18 @@
 }
 
 .about-button {
+    bottom: 0;
+    color: white;
     position: absolute;
-    top: 0;
-    right: 0;
+    left: 0;
     z-index: 1000;
-    font-weight: 700;
+    background: var(--secondary);
+    border-radius: 0 4px 0 0;
 }
 
 .about-button:hover {
-    background: var(--black_lighter);
+    background: var(--secondary_darker);
     border-radius: 0 0 0 4px;
-    color: white;
 }
 
 .about-button:active {
@@ -101,7 +104,7 @@ button {
 }
 
 .Modal__content {
-    background: var(--secondary_darker);
+    background: var(--secondary_darkest);
     color: white;
     min-height: 20%;
     padding: 2rem;
@@ -115,6 +118,10 @@ button {
 
 .Modal__content--header {
     text-align: center;
+}
+
+.Modal__content--footer {
+    margin-top: 2rem;
 }
 
 @media (min-width: 1400px) {
