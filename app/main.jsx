@@ -19,7 +19,7 @@ const ROUTES = NortaGeoJson
     .reduce((acc, f) => {
         return {
             ...acc,
-            [f.properties.route_id]: <GeoJSON data={f} pathOptions={{ color: f.properties.route_color }} />
+            [f.properties.route_id]: <GeoJSON key={f.properties.route_id} data={f} pathOptions={{ color: f.properties.route_color }} />
         }
     }, {})
 
@@ -77,7 +77,6 @@ class App extends React.Component {
             vehicles: [],
             routes: JSON.parse(routes),
             connected: false,
-            tab: "map",
             lastUpdate: new Date(),
             now: new Date(),
         }
@@ -206,10 +205,6 @@ class App extends React.Component {
                     </label>
                     {connectionStatus}
         </div>
-    }
-
-    onTabSelect(eventKey) {
-        this.setState({ tab: eventKey });
     }
 
     handleRouteChange(routes) {
