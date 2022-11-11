@@ -61,6 +61,13 @@ const RotatedMarker = forwardRef(({ children, ...props }, forwardRef) => {
     );
 });
 
+function timestampDisplay (timestamp) {
+    const relativeTimestamp = new Date() - new Date(timestamp);
+    if (relativeTimestamp < 60000) { return 'less than a minute ago'; }
+    const minutes = Math.round(relativeTimestamp / 60000);
+    if (minutes === 1) { return '1 minute ago'}
+    return minutes + ' minutes ago';
+}
 
 class App extends React.Component {
     constructor(props) {
@@ -125,9 +132,11 @@ class App extends React.Component {
             .map(v => {
                 const coords = [v.lat, v.lon].map(parseFloat)
                 const rotAng = parseInt(v.hdg, 10)
+                const relTime = timestampDisplay(v.tmstmp)
                 return <RotatedMarker key={v.vid} position={coords} icon={iconVehicle} rotationAngle={rotAng} rotationOrigin="center">
                     <Popup>
-                        {v.rt + " - " + v.des + " - " + v.tmstmp}
+                        {v.rt}{v.des ? ' - ' + v.des : ''}
+                        <br/>{relTime}
                     </Popup>
                 </RotatedMarker>
             })
