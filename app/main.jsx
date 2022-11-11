@@ -12,6 +12,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Select from 'react-select'
 import makeAnimated from 'react-select/animated';
+import CustomModal from './components/modal';
 
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
@@ -158,15 +159,15 @@ class App extends React.Component {
     buildControlBar() {
         let connectionStatus = this.state.connected 
             ? <React.Fragment>
-                <span class="control-bar__connection-container connected"><BsFillCircleFill />Connected</span>
+                <span className="control-bar__connection-container connected"><BsFillCircleFill />Connected</span>
               </React.Fragment> 
             : <React.Fragment>
-                <span class="control-bar__connection-container not-connected"><BsFillCloudSlashFill />Not Connected</span>
+                <span className="control-bar__connection-container not-connected"><BsFillCloudSlashFill />Not Connected</span>
               </React.Fragment>
 
         if (this.state.connected && this.lagging()) connectionStatus = 
             <React.Fragment>
-                <span class="control-bar__connection-container trouble-connecting"><BsFillExclamationTriangleFill />Trouble Connecting...</span>
+                <span className="control-bar__connection-container trouble-connecting"><BsFillExclamationTriangleFill />Trouble Connecting...</span>
             </React.Fragment>
 
         if (!this.state.connected) return this.notConnectedScreen()
@@ -202,25 +203,14 @@ class App extends React.Component {
         </div>
     }
 
-    aboutContainer() {
-        return <Container>
-            <Row className="justify-content-md-center">
-                <Col md="auto">
-                    <h1>NOLA transit map</h1>
-                </Col>
-            </Row>
-            <Row className="justify-content-md-center">
-                <Col md="auto">
-                    <p>Created by <a href="https://codeforneworleans.org/">Code For New Orleans</a></p>
-                </Col>
-            </Row>
-            <Row className="justify-content-md-center">
-                <Col md="auto">
-                    <h2>About</h2>
-                </Col>
-            </Row>
-            <Row className="justify-content-md-center">
-                <Col md="auto">
+    generateAboutModal() {
+        return <Modal.Dialog>
+                <Modal.Header closeButton>
+                    <Modal.title>NOLA Transit Map</Modal.title>
+               </Modal.Header>
+               <Modal.Body>
+                <p>Created by <a href="https://codeforneworleans.org/">Code For New Orleans</a></p>
+                <h2>About</h2>
                     <p>
                         When the RTA switched to the new LePass app, all of the realtime data
                         stopped working. Relying on public transportation in New Orleans without this data is extremely challenging.
@@ -231,10 +221,8 @@ class App extends React.Component {
 
                         Take a look at <a href="https://github.com/codefornola/nola-transit-map">the README on GitHub</a> to learn more about how it works.
                     </p>
-                </Col>
-            </Row>
-        </Container>
-
+                </Modal.Body>
+        </Modal.Dialog>
     }
 
     onTabSelect(eventKey) {
@@ -256,10 +244,14 @@ class App extends React.Component {
             <main>
                 {this.buildControlBar()}
                 {this.mapContainer()}
-                <button className="about-button">
+                {/* <button onClick={this.generateAboutModal} className="about-button">
                     <BsInfoCircleFill />
                     About this project
-                </button>
+                </button> */}
+                <CustomModal
+                    title="NOLA Transit Map"
+                    buttonText="About this project"
+                />
             </main>
         </div>
     }

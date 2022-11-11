@@ -1,8 +1,10 @@
 :root {
     --primary: #7A278D;
     --primary_darker: #610C75;
-    --secondary: #02205C91;
     --secondary_lighter: #02205C91;
+    --secondary: #02205c;
+    --secondary_darker: #00040b;
+    --black: #111;
     --black_lighter: #00000094;
     --success: #72B01D;
     --error: #EA3546;
@@ -89,6 +91,30 @@ button {
     cursor: pointer;
     text-align: center;
     transition: background 250ms ease-in-out, transform 150ms ease;
+}
+
+.Modal {
+    position: fixed;
+    z-index: 2000;
+    inset: 0;
+    background: var(--black_lighter);
+}
+
+.Modal__content {
+    background: var(--secondary_darker);
+    color: white;
+    min-height: 20%;
+    padding: 2rem;
+    border-radius: 10px;
+    max-width: 60%;
+    box-shadow: 2px 2px 8px #0009;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 10%;
+}
+
+.Modal__content--header {
+    text-align: center;
 }
 
 @media (min-width: 1400px) {
