@@ -1,13 +1,11 @@
 import React, { useRef, useEffect, forwardRef } from 'react'
 import { createRoot } from 'react-dom/client';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
-import { BsMapFill, BsInfoLg, BsFillCircleFill, BsFillCloudSlashFill, BsFillExclamationTriangleFill, BsInfoCircleFill } from 'react-icons/bs'
-import { BiBus } from 'react-icons/bi'
+import { BsInfoLg, BsFillCircleFill, BsFillCloudSlashFill, BsFillExclamationTriangleFill } from 'react-icons/bs'
 import L from 'leaflet';
 import "leaflet-rotatedmarker";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import NortaGeoJson from '../data/routes.json';
-import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Select from 'react-select'
