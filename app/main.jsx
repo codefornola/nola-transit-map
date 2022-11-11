@@ -155,10 +155,10 @@ class App extends React.Component {
     buildControlBar() {
         let connectionStatus = this.state.connected 
             ? <React.Fragment>
-                <span className="control-bar__connection-container connected"><BsFillCircleFill />Connected</span>
+                <span className="control-bar__connection-container connected"><BsFillCircleFill /><span class="control-bar__label-text">Connected</span></span>
               </React.Fragment> 
             : <React.Fragment>
-                <span className="control-bar__connection-container not-connected"><BsFillCloudSlashFill />Not Connected</span>
+                <span className="control-bar__connection-container not-connected"><BsFillCloudSlashFill /><span class="control-bar__label-text">Not Connected</span></span>
               </React.Fragment>
 
         if (this.state.connected && this.lagging()) connectionStatus = 
@@ -182,7 +182,7 @@ class App extends React.Component {
         })
 
         return <div class="control-bar">
-                    <label class="control-bar__filter-label">Filter Routes:
+                    <label class="control-bar__filter-label"><span class="control-bar__label-text">Filter Routes:</span>
                         <Select
                             closeMenuOnSelect={false}
                             components={animatedComponents}
@@ -192,7 +192,7 @@ class App extends React.Component {
                             options={routeOptions}
                             onChange={this.handleRouteChange}
                             className="route-filter"
-                            placeholder="Select Route(s)"
+                            placeholder="Filter Select Route(s)"
                         />
                     </label>
                     {connectionStatus}

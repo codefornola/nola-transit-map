@@ -142,6 +142,17 @@ button {
     body {
         font-size: 0.9rem;
     }
+    .control-bar__filter-label {
+        width: 100%;
+        padding: 0.5rem 0;
+    }
+    
+    .route-filter {
+        width: 100%;
+    }
+    .control-bar__label-text {
+        display: none;
+    }
     .control-bar {
         min-width: 100vw;
         font-size: 0.75rem;
@@ -150,5 +161,9 @@ button {
     .Modal__content {
         max-width: 90%;
         margin-top: 20%;
+    }
+    .about-button {
+        font-size: 0.7rem;
+        padding: 0.5rem 0.75rem;
     }
 }
