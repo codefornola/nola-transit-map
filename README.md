@@ -15,7 +15,7 @@ getting around the city extremely frustrating. This map is just a stop gap to ge
 
 You need to get the key from Ben on Slack in #civic-hacking. If you aren't in the NOLA Devs slack here is an invite: https://nola.slack.com/join/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ
 
-You need a few things deps your machine:
+You need a few things your machine on your machine to build the project. If you are an `asdf` user there is a .tool-versions file with acceptable versions of node, npm, and go, but not make to keep from conflicting with system build tools.
 
 * node and npm
 * go
