@@ -2,6 +2,7 @@ CLEVER_DEVICES_KEY?=""
 CLEVER_DEVICES_IP?=""
 
 build:
+	npm install
 	npm run build
 	go build
 

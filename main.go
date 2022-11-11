@@ -69,7 +69,13 @@ func (t *VehicleTimestamp) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	time := time.Date(year, time.Month(month), day, hour, mins, 0, 0, time.Local)
+	loc, err := time.LoadLocation("America/Chicago")
+	if err != nil {
+		return err
+	}
+
+
+	time := time.Date(year, time.Month(month), day, hour, mins, 0, 0, loc)
 	t.Time = time
 
 	return nil
