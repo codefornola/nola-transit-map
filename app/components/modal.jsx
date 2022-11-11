@@ -16,7 +16,7 @@ function CustomModal(props) {
                 <aside class="Modal__content">
                     <div class="Modal__content--header">
                         <h2>{props.title}</h2>
-                        <p>Created by <a href="https://codeforneworleans.org/">Code For New Orleans</a></p>
+                        <p>{props.subtitle}</p>
                     </div>
                         <p>
                             When the RTA switched to the new LePass app, all of the realtime data
