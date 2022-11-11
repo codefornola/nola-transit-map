@@ -21,7 +21,7 @@
     position: absolute;
     min-width: 35vw;
     z-index: 1000;
-    border-radius: 0 0 4px 0px;
+    border-radius: 0 0 10px 0px;
 }
 
 
@@ -65,12 +65,11 @@
     left: 0;
     z-index: 1000;
     background: var(--secondary);
-    border-radius: 0 4px 0 0;
+    border-radius: 0 10px 0 0;
 }
 
 .about-button:hover {
     background: var(--secondary_darker);
-    border-radius: 0 0 0 4px;
 }
 
 .about-button:active {
@@ -134,10 +133,22 @@ button {
     .control-bar {
         min-width: 45vw;
     }
+    .Modal__content {
+        max-width: 75%;
+    }
 }
 
 @media (max-width: 500px) {
+    body {
+        font-size: 0.9rem;
+    }
     .control-bar {
         min-width: 100vw;
+        font-size: 0.75rem;
+    }
+
+    .Modal__content {
+        max-width: 90%;
+        margin-top: 20%;
     }
 }
