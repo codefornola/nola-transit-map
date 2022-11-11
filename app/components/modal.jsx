@@ -12,7 +12,7 @@ function CustomModal(props) {
         <div>
             <button onClick={handleShow} className="about-button">{props.buttonText}</button>
             {show ?(
-            <div class="Modal" onClick={handleClose}>
+            <div class="Modal">
                 <aside class="Modal__content">
                     <div class="Modal__content--header">
                         <h2>{props.title}</h2>
