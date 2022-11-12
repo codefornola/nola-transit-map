@@ -11,6 +11,7 @@ import Col from 'react-bootstrap/Col';
 import Select from 'react-select'
 import makeAnimated from 'react-select/animated';
 import CustomModal from './components/modal';
+import './main.css';
 
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson

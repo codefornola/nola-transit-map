@@ -6,26 +6,13 @@
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css"
 		integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14="
 		crossorigin=""/>
-		<link rel="stylesheet" type="text/css" href="/public/main.css"/>
-		<script src="/public/app.js?sha=3f2a1aaba2750395ae85b9551f237783a80fe6d6"></script>
+		<link rel="stylesheet" type="text/css" href="/public/app.css?sha=3f2a1aaba2750395ae85b9551f237783a80fe6d6"/>
 		<script>
 			window.onload = function () {
 				window.initApp()
 			}
 		</script>
-		<style>
-			body {
-				padding: 0;
-				margin: 0;
-			}
-			html, body, #main, main, .App, .leaflet-container {
-				height: 100%;
-				width: 100vw;
-			}
-			/* Need this hack to get transparency to work */
-			.leaflet-marker-icon { background-color: transparent; border-color: transparent }
-		</style>
-		<link rel="stylesheet" href="/public/app.css?sha=3f2a1aaba2750395ae85b9551f237783a80fe6d6"/>
+		<script src="/public/app.js?sha=3f2a1aaba2750395ae85b9551f237783a80fe6d6"></script>
     </head>
     <body>
 		<div id="main" />
