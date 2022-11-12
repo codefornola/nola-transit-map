@@ -11,6 +11,7 @@ import Col from 'react-bootstrap/Col';
 import Select from 'react-select'
 import makeAnimated from 'react-select/animated';
 import CustomModal from './components/modal';
+import LocationMarker from './components/location';
 import './main.css';
 
 const animatedComponents = makeAnimated();
@@ -150,6 +151,7 @@ class App extends React.Component {
             />
             {this.markerComponents()}
             {this.routeComponents()}
+            <LocationMarker />
         </MapContainer>
     }
 
