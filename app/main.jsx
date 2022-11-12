@@ -232,8 +232,8 @@ class App extends React.Component {
                     content={
                         [
                             'When the RTA switched to the new LePass app, all of the realtime data stopped working. Relying on public transportation in New Orleans without this data is extremely challenging. We made this map as a stop gap until realtime starts working again.',
-                            
-                            <br></br>,<br></br>, 'If you find an problem, or have a feature request, consider ', <a href="https://github.com/codefornola/nola-transit-map/issues">filing an issue here.</a>,
+
+                            <br></br>,<br></br>, 'If you find a problem, or have a feature request, consider ', <a href="https://github.com/codefornola/nola-transit-map/issues">filing an issue here.</a>,
                             ' You can also join us on slack in the #civic-hacking channel of the ', <a href="https://join.slack.com/t/nola/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ">Nola Devs slack.</a>,
                             ' Take a look at ', <a href="https://github.com/codefornola/nola-transit-map">the README on GitHub</a>, ' to learn more about how it works.'
                         ]
