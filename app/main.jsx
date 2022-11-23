@@ -71,6 +71,10 @@ function timestampDisplay (timestamp) {
     return minutes + ' minutes ago';
 }
 
+const scheme = window.location.protocol == "http:" ? "ws" : "wss"
+const url = `${scheme}://${window.location.hostname}:${window.location.port}/ws`
+const conn = new WebSocket(url);
+
 class App extends React.Component {
     constructor(props) {
         super(props)
@@ -85,10 +89,11 @@ class App extends React.Component {
         this.handleRouteChange = this.handleRouteChange.bind(this)
     }
 
-    componentDidMount() {
-        const scheme = window.location.protocol == "http:" ? "ws" : "wss"
-        const url = `${scheme}://${window.location.hostname}:${window.location.port}/ws`
-        const conn = new WebSocket(url);
+    componentWillMount() {
+        conn.onopen = () => {
+            console.log("Websocket Open")
+            this.setState({ connected: true })
+        }
         conn.onclose = () => {
             console.log("Closing websocket")
             this.setState({ connected: false })
