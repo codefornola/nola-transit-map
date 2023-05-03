@@ -8,8 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -39,33 +37,11 @@ type VehicleTimestamp struct {
 }
 
 // UnmarshalJSON
-// We need a special unmarshal method for this string timetstamp. it's of the
+// We need a special unmarshal method for this string timestamp. It's of the
 // form "YYYYMMDD hh:mm"
 func (t *VehicleTimestamp) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	parts := strings.Split(s, " ")
-	year, err := strconv.Atoi(parts[0][0:4])
-	if err != nil {
-		return err
-	}
-	month, err := strconv.Atoi(parts[0][4:6])
-	if err != nil {
-		return err
-	}
-	day, err := strconv.Atoi(parts[0][6:8])
-	if err != nil {
-		return err
-	}
-	timeParts := strings.Split(parts[1], ":")
-	hour, err := strconv.Atoi(timeParts[0])
-	if err != nil {
-		return err
-	}
-	mins, err := strconv.Atoi(timeParts[1])
-	if err != nil {
 		return err
 	}
 
@@ -74,10 +50,14 @@ func (t *VehicleTimestamp) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	// "YYYYMMDD hh:mm" https://pkg.go.dev/time#pkg-constants
+	format := "20060102 15:04"
+	time, err := time.ParseInLocation(format, s, loc)
+	if err != nil {
+		return err
+	}
 
-	time := time.Date(year, time.Month(month), day, hour, mins, 0, 0, loc)
 	t.Time = time
-
 	return nil
 }
 
