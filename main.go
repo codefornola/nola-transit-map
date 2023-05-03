@@ -166,7 +166,7 @@ func NewScraper() *Scraper {
 	}
 
 	config := &Config{
-		Url:      fmt.Sprintf("http://%s/bustime/api/v3/getvehicles", ip),
+		Url:      fmt.Sprintf("https://%s/bustime/api/v3/getvehicles", ip),
 		Interval: 10 * time.Second,
 		Key:      api_key,
 	}
