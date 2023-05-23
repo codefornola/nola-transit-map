@@ -3,30 +3,19 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
 
-var (
-	scrapeInterval = flag.Duration("scrape-interval", 10*time.Second, "scraper fetch interval")
-	scrapeKey      = flag.String("scrape-key", "", "scraper api key")
-	scrapeHost     = flag.String("scrape-host", "", "scraper host/ip")
-)
-
-type ScraperConfig struct {
-	Interval time.Duration
-	Key      string // env:CLEVER_DEVICES_KEY
-	Host     string // env:CLEVER_DEVICES_IP
-}
-
 type Scraper struct {
 	Config ScraperConfig
 	Client interface {
-		Do(*http.Request) (http.Response, error)
+		Do(*http.Request) (*http.Response, error)
 	}
 	Log interface {
 		Printf(format string, v ...any)
@@ -38,6 +27,27 @@ type Scraper struct {
 	req  *http.Request
 }
 
+type ScraperConfig struct {
+	Interval time.Duration
+	Key      string // env:CLEVER_DEVICES_KEY
+	Host     string // env:CLEVER_DEVICES_IP
+}
+
+func (sc *ScraperConfig) Env() error {
+	var ok bool
+	if sc.Key, ok = os.LookupEnv("CLEVER_DEVICES_KEY"); !ok {
+		return errors.New("Need to set environment variable CLEVER_DEVICES_KEY. " +
+			"Try `make run CLEVER_DEVICES_KEY=theKey`. " +
+			"Get key from Ben on slack")
+	}
+	if sc.Host, ok = os.LookupEnv("CLEVER_DEVICES_IP"); !ok {
+		return errors.New("Need to set environment variable CLEVER_DEVICES_IP. " +
+			"Try `make run CLEVER_DEVICES_IP=theIP`. " +
+			"Get key from Ben on slack")
+	}
+	return nil
+}
+
 func (s *Scraper) init(ctx context.Context) (err error) {
 	s.once.Do(func() {
 		u := &url.URL{
@@ -45,10 +55,10 @@ func (s *Scraper) init(ctx context.Context) (err error) {
 			Host:   s.Config.Host,
 			Path:   "/bustime/api/v3/getvehicles",
 			RawQuery: url.Values(map[string][]string{
-				"key":          []string{s.Config.Key},
-				"tmres":        []string{"m"},
-				"rtpidatafeed": []string{"bustime"},
-				"format":       []string{"json"},
+				"key":          {s.Config.Key},
+				"tmres":        {"m"},
+				"rtpidatafeed": {"bustime"},
+				"format":       {"json"},
 			}).Encode(),
 		}
 		s.req, err = http.NewRequest(http.MethodGet, u.String(), nil)
@@ -60,6 +70,7 @@ func (s *Scraper) init(ctx context.Context) (err error) {
 	return
 }
 
+// Scrape fetches results on an interval and publishes them.
 func (s *Scraper) Scrape(ctx context.Context) error {
 	if err := s.init(ctx); err != nil {
 		return fmt.Errorf("failed to init Scraper: %w", err)
@@ -71,10 +82,10 @@ func (s *Scraper) Scrape(ctx context.Context) error {
 		case <-tic.C:
 			results, err := s.fetch(ctx)
 			if err != nil {
-				s.Log.Printf("ERROR: failed to fetch: %s", err)
+				s.Log.Printf("ERROR: scraper failed to fetch: %s", err)
 				continue
 			}
-			s.Log.Printf("INFO: Found %d vehicles", len(results))
+			s.Log.Printf("INFO: scraper fetched %d vehicles", len(results))
 			s.Publisher.Publish(ctx, results)
 		case <-ctx.Done():
 			return ctx.Err()
@@ -82,6 +93,7 @@ func (s *Scraper) Scrape(ctx context.Context) error {
 	}
 }
 
+// fetch GETs the scape data and parses the response body.
 func (s *Scraper) fetch(ctx context.Context) ([]json.RawMessage, error) {
 	resp, err := s.Client.Do(s.req.Clone(ctx))
 	if err != nil {

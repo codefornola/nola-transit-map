@@ -2,60 +2,58 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"flag"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
+	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 )
 
-var (
-	subscriberBuffer  = flag.Uint("sub-buffer", 200, "size of buffer for subscribers. Should be able to hold one set of vehicle responses")
-	subscriberTimeout = flag.Duration("sub-timeout", 10*time.Second, "time allowed to write messages to client")
-)
+// PubSub controls a set of Subscribers and publishes messages to them.
+// inspired by https://github.com/nhooyr/websocket/tree/v1.8.7/examples/chat
+type PubSub[U any] struct {
+	Config PubSubConfig
+
+	mu     sync.Mutex
+	subMap map[Subscriber[U]]struct{}
+}
 
 type PubSubConfig struct {
 	BufferSize uint
 	Timeout    time.Duration
 }
 
-type PubSub struct {
-	Config PubSubConfig
-
-	mu     sync.Mutex
-	subMap map[Subscriber]struct{}
-}
-
-func (ps PubSub) Publish(ctx context.Context, msgs []json.RawMessage) {
+// Publish writes a message to each subscriber.
+func (ps *PubSub[U]) Publish(ctx context.Context, msg U) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 	for sub := range ps.subMap {
 		select {
-		case sub.In <- msgs:
+		case sub.In <- msg:
 		default:
 			go sub.CloseSlow()
 		}
 	}
 }
 
-type Subscriber struct {
-	In   chan []json.RawMessage
+type Subscriber[U any] struct {
+	In   chan U
 	conn *websocket.Conn
 }
 
-func (s Subscriber) CloseSlow() {
+func (s Subscriber[U]) CloseSlow() {
 	s.conn.Close(
 		websocket.StatusPolicyViolation,
 		"connection too slow to keep up with messages",
 	)
 }
 
-func (ps PubSub) Subscribe(ctx context.Context, conn *websocket.Conn) error {
+// Subscribe maintains long-running websocket writes.
+func (ps *PubSub[U]) Subscribe(ctx context.Context, conn *websocket.Conn) error {
 	ctx = conn.CloseRead(ctx)
-	sub := Subscriber{
-		In:   make(chan []json.RawMessage, ps.Config.BufferSize),
+	sub := Subscriber[U]{
+		In:   make(chan U, ps.Config.BufferSize),
 		conn: conn,
 	}
 	ps.mu.Lock()

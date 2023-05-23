@@ -3,24 +3,12 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
-	"log"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"golang.org/x/sync/errgroup"
+	"nhooyr.io/websocket"
 )
-
-var (
-	severAddr    = flag.String("addr", ":8080", "http service address")
-	severTimeout = flag.Duration("timeout", 10*time.Second, "server read and write timeouts")
-)
-
-type ServerConfig struct {
-	Addr    string
-	Timeout time.Duration
-}
 
 type Server struct {
 	Config     ServerConfig
@@ -33,13 +21,19 @@ type Server struct {
 	Mux *http.ServeMux
 }
 
+type ServerConfig struct {
+	Addr    string
+	Timeout time.Duration
+}
+
+// Start attaches mux handlers and maintains the long-running server.
 func (s Server) Start(ctx context.Context) error {
 	s.Mux.Handle("/", http.FileServer(http.Dir("./public")))
 	// s.Mux.Handle("/public/",http.StripPrefix("/public/",fs))
 
 	s.Mux.HandleFunc("/ws", s.newWebSocketHandler())
 
-	log.Println("Starting server")
+	s.Log.Printf("INFO: starting server")
 	server := &http.Server{
 		Addr:         s.Config.Addr,
 		Handler:      s.Mux,
@@ -48,39 +42,37 @@ func (s Server) Start(ctx context.Context) error {
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(s.ListenAndServe)
+	g.Go(server.ListenAndServe)
 	if err := g.Wait(); err != nil {
-		// TODO log
+		s.Log.Printf("ERROR: server failed: %s", err)
 	}
 
+	// shutdown gracefully
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	return server.Shutdown(ctx)
 }
 
+// newWebSocketHandler upgrades a request to a long-running websocket connection.
 func (s Server) newWebSocketHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := websocket.Accept(w, r, nil)
 		if err != nil {
-			// TODO log the error
-			s.Log.Printf("%v", err)
+			s.Log.Printf("websocket upgrade failed: %s", err)
 			return
 		}
 		defer conn.Close(websocket.StatusInternalError, "")
 
 		err = s.Subscriber.Subscribe(r.Context(), conn)
-		if errors.Is(err, context.Canceled) {
-			// TODO log
-			return
-		}
-		if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+		if errors.Is(err, context.Canceled) ||
+			websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
 			websocket.CloseStatus(err) == websocket.StatusGoingAway {
-			// TODO log
+			s.Log.Printf("INFO: websocket subscriber disconnected: %s", err)
 			return
 		}
 		if err != nil {
-			// TODO log
+			s.Log.Printf("ERROR: websocket subscriber failed: %s", err)
 			return
 		}
 	}
