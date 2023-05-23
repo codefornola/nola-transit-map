@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -25,176 +23,8 @@ const (
 )
 
 var (
-	addr     = flag.String("addr", ":8080", "http service address")
-	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-	}
+	addr = flag.String("addr", ":8080", "http service address")
 )
-
-type VehicleTimestamp struct {
-	time.Time
-}
-
-// UnmarshalJSON
-// We need a special unmarshal method for this string timestamp. It's of the
-// form "YYYYMMDD hh:mm"
-func (t *VehicleTimestamp) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	loc, err := time.LoadLocation("America/Chicago")
-	if err != nil {
-		return err
-	}
-
-	// "YYYYMMDD hh:mm" https://pkg.go.dev/time#pkg-constants
-	format := "20060102 15:04"
-	time, err := time.ParseInLocation(format, s, loc)
-	if err != nil {
-		return err
-	}
-
-	t.Time = time
-	return nil
-}
-
-// Vehicle represents an individual reading of a vehicle and it's location
-// at that point in time
-// Example:
-//
-//	{
-//	  "vid": "155",
-//	  "tmstmp": "20200827 11:51",
-//	  "lat": "29.962149326173048",
-//	  "lon": "-90.05214051918121",
-//	  "hdg": "357",
-//	  "pid": 275,
-//	  "rt": "5",
-//	  "des": "Saratoga at Canal",
-//	  "pdist": 10122,
-//	  "dly": false,
-//	  "spd": 20,
-//	  "tatripid": "3130339",
-//	  "tablockid": "15",
-//	  "zone": "",
-//	  "srvtmstmp": "20200827 11:51",
-//	  "oid": "445",
-//	  "or": true,
-//	  "rid": "501",
-//	  "blk": 2102,
-//	  "tripid": 982856020
-//	}
-type Vehicle struct {
-	Vid        string           `json:"vid"`
-	Tmstmp     VehicleTimestamp `json:"tmstmp"`
-	SrvTimstmp VehicleTimestamp `json:"srvtmstmp"`
-	Lat        float64          `json:"lat,string"`
-	Lon        float64          `json:"lon,string"`
-	Hdg        string           `json:"hdg"`
-	Rt         string           `json:"rt"`
-	Tatripid   string           `json:"tatripid"`
-	Tablockid  string           `json:"tablockid"`
-	Zone       string           `json:"zone"`
-	Oid        string           `json:"oid"`
-	Rid        string           `json:"rid"`
-	Des        string           `json:"des"`
-	Pdist      int              `json:"pdist"`
-	Pid        int              `json:"pid"`
-	Spd        int              `json:"spd"`
-	Blk        int              `json:"blk"`
-	Tripid     int              `json:"tripid"`
-	Dly        bool             `json:"dly"`
-	Or         bool             `json:"or"`
-}
-
-type BusErr struct {
-	Rt  string `json:"rt"`
-	Msg string `json:"msg"`
-}
-
-type BustimeData struct {
-	Vehicles []Vehicle `json:"vehicle"`
-	Errors   []BusErr  `json:"error"`
-}
-
-type BustimeResponse struct {
-	Data BustimeData `json:"bustime-response"`
-}
-
-type Config struct {
-	Key      string        `yaml:"key"`
-	Interval time.Duration `yaml:"interval"`
-	Url      string        `yaml:"url"`
-}
-
-type Scraper struct {
-	client *http.Client
-	config *Config
-}
-
-func NewScraper() *Scraper {
-	api_key, ok := os.LookupEnv("CLEVER_DEVICES_KEY")
-	if !ok {
-		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
-	}
-	ip, ok := os.LookupEnv("CLEVER_DEVICES_IP")
-	if !ok {
-		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
-	}
-
-	config := &Config{
-		Url:      fmt.Sprintf("https://%s/bustime/api/v3/getvehicles", ip),
-		Interval: 10 * time.Second,
-		Key:      api_key,
-	}
-	tr := &http.Transport{
-		MaxIdleConnsPerHost: 1024,
-		TLSHandshakeTimeout: 0 * time.Second,
-	}
-	client := &http.Client{Transport: tr}
-	return &Scraper{
-		client,
-		config,
-	}
-}
-
-func (s *Scraper) Start(vs chan []Vehicle) {
-	for {
-		result := s.fetch()
-		log.Printf("Found %d vehicles\n", len(result.Vehicles))
-		vs <- result.Vehicles
-		time.Sleep(s.config.Interval)
-	}
-}
-
-func (v *Scraper) fetch() *BustimeData {
-	key := v.config.Key
-	baseURL := v.config.Url
-	url := fmt.Sprintf("%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json", baseURL, key)
-	resp, err := v.client.Get(url)
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		log.Println(err)
-	}
-	body, readErr := ioutil.ReadAll(resp.Body)
-	if readErr != nil {
-		log.Fatal(readErr)
-	}
-
-	result := &BustimeResponse{}
-	json.Unmarshal(body, result)
-
-	return &result.Data
-}
-
-func (v *Scraper) Close() {
-	v.client.CloseIdleConnections()
-}
 
 type VehicleChannel = chan []Vehicle
 
@@ -338,6 +168,17 @@ func (s *Server) serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 	go s.writer(ws)
 	s.reader(ws)
+}
+
+func NewScraper() *Scraper {
+	api_key, ok := os.LookupEnv("CLEVER_DEVICES_KEY")
+	if !ok {
+		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
+	}
+	ip, ok := os.LookupEnv("CLEVER_DEVICES_IP")
+	if !ok {
+		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
+	}
 }
 
 func main() {

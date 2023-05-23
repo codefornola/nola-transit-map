@@ -64,7 +64,7 @@ const RotatedMarker = forwardRef(({ children, ...props }, forwardRef) => {
 });
 
 function timestampDisplay (timestamp) {
-    const relativeTimestamp = new Date() - new Date(timestamp);
+    const relativeTimestamp = new Date() - new Date(timestamp.replace(" ", "T"));
     if (relativeTimestamp < 60000) { return 'less than a minute ago'; }
     const minutes = Math.round(relativeTimestamp / 60000);
     if (minutes === 1) { return '1 minute ago'}
