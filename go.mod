@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/hashicorp/go-cleanhttp v0.5.2
-	golang.org/x/sync v0.2.0
 	nhooyr.io/websocket v1.8.7
 )
 
