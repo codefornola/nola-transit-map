@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/sync/errgroup"
 	"nhooyr.io/websocket"
 )
 
@@ -30,8 +29,11 @@ type ServerConfig struct {
 
 // Start attaches mux handlers and maintains the long-running server.
 func (s Server) Start(ctx context.Context) error {
-	s.Mux.Handle("/", http.FileServer(http.Dir("./public")))
-	// s.Mux.Handle("/public/",http.StripPrefix("/public/",fs))
+	s.Mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./public/index.html")
+	})
+	s.Mux.Handle("/public/",
+		http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
 
 	s.Mux.HandleFunc("/ws", s.newWebSocketHandler())
 
@@ -46,13 +48,17 @@ func (s Server) Start(ctx context.Context) error {
 			return ctx
 		},
 	}
-
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(server.ListenAndServe)
-	if err := g.Wait(); err != nil {
+	errc := make(chan error, 1)
+	defer close(errc)
+	go func() {
+		errc <- server.ListenAndServe()
+	}()
+	select {
+	case err := <-errc:
 		s.Log.Printf("ERROR: server failed: %s", err)
+	case <-ctx.Done():
 	}
-
+	s.Log.Printf("INFO: shutting server down")
 	// shutdown gracefully
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

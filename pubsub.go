@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -21,6 +22,9 @@ type PubSub[U any] struct {
 	once   sync.Once
 	mu     sync.Mutex
 	subMap map[Subscriber[U]]struct{}
+
+	cacheMu sync.RWMutex
+	cache   U
 }
 
 type PubSubConfig struct {
@@ -39,6 +43,10 @@ func (ps *PubSub[U]) init(_ context.Context) {
 // Publish writes a message to each subscriber.
 func (ps *PubSub[U]) Publish(ctx context.Context, msg U) {
 	ps.init(ctx)
+	ps.cacheMu.Lock()
+	ps.cache = msg
+	ps.cacheMu.Unlock()
+
 	ps.mu.Lock()
 	ps.Log.Printf("INFO: publishing to %d subscribers", len(ps.subMap))
 	defer ps.mu.Unlock()
@@ -80,6 +88,13 @@ func (ps *PubSub[U]) Subscribe(ctx context.Context, conn *websocket.Conn) error 
 		ps.mu.Unlock()
 		close(sub.In)
 	}()
+
+	// send the cached results
+	if !reflect.ValueOf(ps.cache).IsZero() {
+		ps.cacheMu.RLock()
+		sub.In <- ps.cache
+		ps.cacheMu.RUnlock()
+	}
 
 	for {
 		select {

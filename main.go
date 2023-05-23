@@ -31,7 +31,7 @@ func init() {
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
-	log := log.New(os.Stdout, "", log.Ldate|log.Ltime|log.LUTC|log.Lshortfile)
+	log := log.New(os.Stderr, "", log.Ldate|log.Ltime|log.LUTC)
 	if err := run(ctx, log); err != nil {
 		log.Fatal(err)
 	}

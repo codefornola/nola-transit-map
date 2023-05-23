@@ -94,7 +94,31 @@ func (s *Scraper) Scrape(ctx context.Context) error {
 }
 
 // fetch GETs the scape data and parses the response body.
+//
+//	json.RawMessage(`{
+//	  "vid": "155",
+//	  "tmstmp": "20200827 11:51",
+//	  "lat": "29.962149326173048",
+//	  "lon": "-90.05214051918121",
+//	  "hdg": "357",
+//	  "pid": 275,
+//	  "rt": "5",
+//	  "des": "Saratoga at Canal",
+//	  "pdist": 10122,
+//	  "dly": false,
+//	  "spd": 20,
+//	  "tatripid": "3130339",
+//	  "tablockid": "15",
+//	  "zone": "",
+//	  "srvtmstmp": "20200827 11:51",
+//	  "oid": "445",
+//	  "or": true,
+//	  "rid": "501",
+//	  "blk": 2102,
+//	  "tripid": 982856020
+//	}`),
 func (s *Scraper) fetch(ctx context.Context) ([]json.RawMessage, error) {
+
 	resp, err := s.Client.Do(s.req.Clone(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("GET failed: %w", err)
