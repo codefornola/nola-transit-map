@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
+	"net"
 	"net/http"
 	"time"
 
@@ -39,6 +41,10 @@ func (s Server) Start(ctx context.Context) error {
 		Handler:      s.Mux,
 		ReadTimeout:  s.Config.Timeout,
 		WriteTimeout: s.Config.Timeout,
+		ErrorLog:     s.Log.(*log.Logger),
+		BaseContext: func(net.Listener) context.Context {
+			return ctx
+		},
 	}
 
 	g, ctx := errgroup.WithContext(ctx)

@@ -24,7 +24,7 @@ func init() {
 	flag.StringVar(&args.ServerConfig.Addr, "addr", ":8080", "http service address")
 	flag.DurationVar(&args.ServerConfig.Timeout, "timeout", 10*time.Second, "server read and write timeouts")
 	flag.DurationVar(&args.ScraperConfig.Interval, "scrape-interval", 10*time.Second, "scraper fetch interval")
-	flag.UintVar(&args.PubSubConfig.BufferSize, "sub-buffer", 200, "size of buffer for subscribers. min: one array of vehicle responses")
+	flag.UintVar(&args.PubSubConfig.BufferSize, "sub-buffer", 200, "size of buffer for subscribers. min size: one array of vehicle responses")
 	flag.DurationVar(&args.PubSubConfig.Timeout, "sub-timeout", 10*time.Second, "time allowed to write messages to client")
 }
 
@@ -44,6 +44,7 @@ func run(ctx context.Context, log *log.Logger) error {
 
 	pubSub := &PubSub[[]json.RawMessage]{
 		Config: args.PubSubConfig,
+		Log:    log,
 	}
 	go (&Scraper{
 		Config:    args.ScraperConfig,

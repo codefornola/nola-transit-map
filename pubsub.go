@@ -14,7 +14,11 @@ import (
 // inspired by https://github.com/nhooyr/websocket/tree/v1.8.7/examples/chat
 type PubSub[U any] struct {
 	Config PubSubConfig
+	Log    interface {
+		Printf(fomat string, v ...any)
+	}
 
+	once   sync.Once
 	mu     sync.Mutex
 	subMap map[Subscriber[U]]struct{}
 }
@@ -24,9 +28,19 @@ type PubSubConfig struct {
 	Timeout    time.Duration
 }
 
+func (ps *PubSub[U]) init(_ context.Context) {
+	ps.once.Do(func() {
+		ps.mu.Lock()
+		ps.subMap = make(map[Subscriber[U]]struct{})
+		ps.mu.Unlock()
+	})
+}
+
 // Publish writes a message to each subscriber.
 func (ps *PubSub[U]) Publish(ctx context.Context, msg U) {
+	ps.init(ctx)
 	ps.mu.Lock()
+	ps.Log.Printf("INFO: publishing to %d subscribers", len(ps.subMap))
 	defer ps.mu.Unlock()
 	for sub := range ps.subMap {
 		select {
@@ -51,6 +65,7 @@ func (s Subscriber[U]) CloseSlow() {
 
 // Subscribe maintains long-running websocket writes.
 func (ps *PubSub[U]) Subscribe(ctx context.Context, conn *websocket.Conn) error {
+	ps.init(ctx)
 	ctx = conn.CloseRead(ctx)
 	sub := Subscriber[U]{
 		In:   make(chan U, ps.Config.BufferSize),
