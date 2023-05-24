@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-type Scraper struct {
-	Config ScraperConfig
+type APIPoller struct {
+	Config APIPollerConfig
 	Client interface {
 		Do(*http.Request) (*http.Response, error)
 	}
@@ -27,20 +27,20 @@ type Scraper struct {
 	req  *http.Request
 }
 
-type ScraperConfig struct {
+type APIPollerConfig struct {
 	Interval time.Duration
 	Key      string // env:CLEVER_DEVICES_KEY
 	Host     string // env:CLEVER_DEVICES_IP
 }
 
-func (sc *ScraperConfig) Env() error {
+func (c *APIPollerConfig) Env() error {
 	var ok bool
-	if sc.Key, ok = os.LookupEnv("CLEVER_DEVICES_KEY"); !ok {
+	if c.Key, ok = os.LookupEnv("CLEVER_DEVICES_KEY"); !ok {
 		return errors.New("Need to set environment variable CLEVER_DEVICES_KEY. " +
 			"Try `make run CLEVER_DEVICES_KEY=theKey`. " +
 			"Get key from Ben on slack")
 	}
-	if sc.Host, ok = os.LookupEnv("CLEVER_DEVICES_IP"); !ok {
+	if c.Host, ok = os.LookupEnv("CLEVER_DEVICES_IP"); !ok {
 		return errors.New("Need to set environment variable CLEVER_DEVICES_IP. " +
 			"Try `make run CLEVER_DEVICES_IP=theIP`. " +
 			"Get key from Ben on slack")
@@ -48,20 +48,20 @@ func (sc *ScraperConfig) Env() error {
 	return nil
 }
 
-func (s *Scraper) init(ctx context.Context) (err error) {
-	s.once.Do(func() {
+func (a *APIPoller) init(ctx context.Context) (err error) {
+	a.once.Do(func() {
 		u := &url.URL{
 			Scheme: "https",
-			Host:   s.Config.Host,
+			Host:   a.Config.Host,
 			Path:   "/bustime/api/v3/getvehicles",
 			RawQuery: url.Values(map[string][]string{
-				"key":          {s.Config.Key},
+				"key":          {a.Config.Key},
 				"tmres":        {"m"},
 				"rtpidatafeed": {"bustime"},
 				"format":       {"json"},
 			}).Encode(),
 		}
-		s.req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		a.req, err = http.NewRequest(http.MethodGet, u.String(), nil)
 		if err != nil {
 			err = fmt.Errorf("failed to build request: %w", err)
 			return
@@ -70,30 +70,30 @@ func (s *Scraper) init(ctx context.Context) (err error) {
 	return
 }
 
-// Scrape fetches results on an interval and publishes them.
-func (s *Scraper) Scrape(ctx context.Context) error {
-	if err := s.init(ctx); err != nil {
+// Poll fetches results on an interval and publishes the results.
+func (a *APIPoller) Poll(ctx context.Context) error {
+	if err := a.init(ctx); err != nil {
 		return fmt.Errorf("failed to init Scraper: %w", err)
 	}
-	tic := time.NewTicker(s.Config.Interval)
+	tic := time.NewTicker(a.Config.Interval)
 	defer tic.Stop()
 	for {
 		select {
 		case <-tic.C:
-			results, err := s.fetch(ctx)
+			results, err := a.fetch(ctx)
 			if err != nil {
-				s.Log.Printf("ERROR: scraper failed to fetch: %s", err)
+				a.Log.Printf("ERROR: scraper failed to fetch: %s", err)
 				continue
 			}
-			s.Log.Printf("INFO: scraper fetched %d vehicles", len(results))
-			s.Publisher.Publish(ctx, results)
+			a.Log.Printf("INFO: scraper fetched %d vehicles", len(results))
+			a.Publisher.Publish(ctx, results)
 		case <-ctx.Done():
 			return ctx.Err()
 		}
 	}
 }
 
-// fetch GETs the scape data and parses the response body.
+// fetch GETs the api data and parses the response body.
 //
 //	json.RawMessage(`{
 //	  "vid": "155",
@@ -117,9 +117,8 @@ func (s *Scraper) Scrape(ctx context.Context) error {
 //	  "blk": 2102,
 //	  "tripid": 982856020
 //	}`),
-func (s *Scraper) fetch(ctx context.Context) ([]json.RawMessage, error) {
-
-	resp, err := s.Client.Do(s.req.Clone(ctx))
+func (a *APIPoller) fetch(ctx context.Context) ([]json.RawMessage, error) {
+	resp, err := a.Client.Do(a.req.Clone(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("GET failed: %w", err)
 	}
