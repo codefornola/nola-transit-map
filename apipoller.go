@@ -73,7 +73,7 @@ func (a *APIPoller) init(ctx context.Context) (err error) {
 // Poll fetches results on an interval and publishes the results.
 func (a *APIPoller) Poll(ctx context.Context) error {
 	if err := a.init(ctx); err != nil {
-		return fmt.Errorf("failed to init Scraper: %w", err)
+		return fmt.Errorf("failed to init poller: %w", err)
 	}
 	tic := time.NewTicker(a.Config.Interval)
 	defer tic.Stop()
@@ -82,10 +82,10 @@ func (a *APIPoller) Poll(ctx context.Context) error {
 		case <-tic.C:
 			results, err := a.fetch(ctx)
 			if err != nil {
-				a.Log.Printf("ERROR: scraper failed to fetch: %s", err)
+				a.Log.Printf("ERROR: poller failed to fetch: %s", err)
 				continue
 			}
-			a.Log.Printf("INFO: scraper fetched %d vehicles", len(results))
+			a.Log.Printf("INFO: poller fetched %d vehicles", len(results))
 			a.Publisher.Publish(ctx, results)
 		case <-ctx.Done():
 			return ctx.Err()
@@ -123,6 +123,9 @@ func (a *APIPoller) fetch(ctx context.Context) ([]json.RawMessage, error) {
 		return nil, fmt.Errorf("GET failed: %w", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("response returned with Status '%s'", resp.Status)
+	}
 	var body struct {
 		Data struct {
 			Vehicles []json.RawMessage `json:"vehicle"`
