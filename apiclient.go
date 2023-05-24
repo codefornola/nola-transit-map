@@ -9,31 +9,26 @@ import (
 	"net/url"
 	"os"
 	"sync"
-	"time"
 )
 
-type APIPoller struct {
-	Config APIPollerConfig
+type APIClient[U ~[]V, V any] struct {
+	Config APIClientConfig
 	Client interface {
 		Do(*http.Request) (*http.Response, error)
 	}
 	Log interface {
-		Printf(format string, v ...any)
-	}
-	Publisher interface {
-		Publish(context.Context, []json.RawMessage)
+		Printf(string, ...any)
 	}
 	once sync.Once
 	req  *http.Request
 }
 
-type APIPollerConfig struct {
-	Interval time.Duration
-	Key      string // env:CLEVER_DEVICES_KEY
-	Host     string // env:CLEVER_DEVICES_IP
+type APIClientConfig struct {
+	Key  string // env:CLEVER_DEVICES_KEY
+	Host string // env:CLEVER_DEVICES_IP
 }
 
-func (c *APIPollerConfig) Env() error {
+func (c *APIClientConfig) Env() error {
 	var ok bool
 	if c.Key, ok = os.LookupEnv("CLEVER_DEVICES_KEY"); !ok {
 		return errors.New("Need to set environment variable CLEVER_DEVICES_KEY. " +
@@ -43,14 +38,14 @@ func (c *APIPollerConfig) Env() error {
 	if c.Host, ok = os.LookupEnv("CLEVER_DEVICES_IP"); !ok {
 		return errors.New("Need to set environment variable CLEVER_DEVICES_IP. " +
 			"Try `make run CLEVER_DEVICES_IP=theIP`. " +
-			"Get key from Ben on slack")
+			"Get ip from Ben on slack")
 	}
 	return nil
 }
 
-func (a *APIPoller) init(ctx context.Context) (err error) {
+func (a *APIClient[U, V]) init(ctx context.Context) (err error) {
 	a.once.Do(func() {
-		u := &url.URL{
+		target := &url.URL{
 			Scheme: "https",
 			Host:   a.Config.Host,
 			Path:   "/bustime/api/v3/getvehicles",
@@ -61,7 +56,7 @@ func (a *APIPoller) init(ctx context.Context) (err error) {
 				"format":       {"json"},
 			}).Encode(),
 		}
-		a.req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		a.req, err = http.NewRequest(http.MethodGet, target.String(), nil)
 		if err != nil {
 			err = fmt.Errorf("failed to build request: %w", err)
 			return
@@ -70,30 +65,9 @@ func (a *APIPoller) init(ctx context.Context) (err error) {
 	return
 }
 
-// Poll fetches results on an interval and publishes the results.
-func (a *APIPoller) Poll(ctx context.Context) error {
-	if err := a.init(ctx); err != nil {
-		return fmt.Errorf("failed to init poller: %w", err)
-	}
-	tic := time.NewTicker(a.Config.Interval)
-	defer tic.Stop()
-	for {
-		select {
-		case <-tic.C:
-			results, err := a.fetch(ctx)
-			if err != nil {
-				a.Log.Printf("ERROR: poller failed to fetch: %s", err)
-				continue
-			}
-			a.Log.Printf("INFO: poller fetched %d vehicles", len(results))
-			a.Publisher.Publish(ctx, results)
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}
-
-// fetch GETs the api data and parses the response body.
+// Load GETs the api data and parses the response body.
+//
+// example vehicle:
 //
 //	json.RawMessage(`{
 //	  "vid": "155",
@@ -117,18 +91,33 @@ func (a *APIPoller) Poll(ctx context.Context) error {
 //	  "blk": 2102,
 //	  "tripid": 982856020
 //	}`),
-func (a *APIPoller) fetch(ctx context.Context) ([]json.RawMessage, error) {
+func (a *APIClient[U, V]) Load(ctx context.Context) (U, error) {
+	if err := a.init(ctx); err != nil {
+		var u U
+		return u, fmt.Errorf("failed to init client: %w", err)
+	}
+	results, err := a.load(ctx)
+	if err != nil {
+		return results, err
+	}
+	a.Log.Printf("INFO: client fetched %d vehicles", len(results))
+	return results, err
+}
+
+func (a *APIClient[U, V]) load(ctx context.Context) (U, error) {
 	resp, err := a.Client.Do(a.req.Clone(ctx))
 	if err != nil {
-		return nil, fmt.Errorf("GET failed: %w", err)
+		var u U
+		return u, fmt.Errorf("GET failed: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("response returned with Status '%s'", resp.Status)
+		var u U
+		return u, fmt.Errorf("response returned with Status '%s'", resp.Status)
 	}
 	var body struct {
 		Data struct {
-			Vehicles []json.RawMessage `json:"vehicle"`
+			Vehicles U `json:"vehicle"`
 			// Errors   []struct {
 			// 	Rt  string `json:"rt"`
 			// 	Msg string `json:"msg"`
@@ -136,7 +125,8 @@ func (a *APIPoller) fetch(ctx context.Context) ([]json.RawMessage, error) {
 		} `json:"bustime-response"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return nil, fmt.Errorf("failed to decode response body: %w", err)
+		var u U
+		return u, fmt.Errorf("failed to decode response body: %w", err)
 	}
 	return body.Data.Vehicles, nil
 }
