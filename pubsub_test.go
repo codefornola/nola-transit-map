@@ -110,7 +110,32 @@ func TestPubSub_publish_success(t *testing.T) {
 	})
 }
 
-// TODO test subscriber CloseSlow during publish
+func TestPubSub_publish_closeSlow(t *testing.T) {
+	// buffer 1 will prevent sending two messages on channel
+	cfg := PubSubConfig{BufferSize: 1}
+	subMap := map[Subscriber[int]]struct{}{
+		NewSubscriber[int](cfg, connStub{}): {},
+		NewSubscriber[int](cfg, connStub{}): {},
+	}
+	pubSub := &PubSub[int]{
+		Config: cfg,
+		Log:    log.New(io.Discard, "", 0),
+		subMap: subMap,
+	}
+	pubSub.publish(context.Background(), 1)
+	pubSub.publish(context.Background(), 1)
+	want := 1
+	for sub := range subMap {
+		if got, ok := <-sub.In; !ok || got != want {
+			t.Errorf("mismatch subscriber message. diff: %v", cmp.Diff(got, want))
+		}
+		select {
+		case <-sub.In:
+			t.Error("subscriber has unexpected message.")
+		default:
+		}
+	}
+}
 
 func TestPubSub_subscribe_success(t *testing.T) {
 	t.Run("no cache, single message", func(t *testing.T) {

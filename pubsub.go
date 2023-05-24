@@ -47,7 +47,7 @@ func (ps *PubSub[U]) Publish(ctx context.Context, msg U) {
 	ps.publish(ctx, msg)
 }
 
-func (ps *PubSub[U]) publish(ctx context.Context, msg U) {
+func (ps *PubSub[U]) publish(_ context.Context, msg U) {
 	ps.cacheMu.Lock()
 	ps.cache = msg
 	ps.cacheMu.Unlock()

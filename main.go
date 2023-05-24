@@ -25,7 +25,7 @@ func init() {
 	flag.StringVar(&args.ServerConfig.Addr, "addr", ":8080", "http service address")
 	flag.DurationVar(&args.ServerConfig.Timeout, "timeout", 10*time.Second, "server read and write timeouts")
 	flag.DurationVar(&args.PollerConfig.Interval, "poll-interval", 10*time.Second, "api poller fetch interval")
-	flag.UintVar(&args.PubSubConfig.BufferSize, "sub-buffer", 200, "size of buffer for subscribers. min size: one array of vehicle responses")
+	flag.UintVar(&args.PubSubConfig.BufferSize, "sub-buffer", 1, "size of buffer for subscribers")
 	flag.DurationVar(&args.PubSubConfig.Timeout, "sub-timeout", 10*time.Second, "time allowed to write messages to client")
 }
 
