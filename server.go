@@ -14,7 +14,7 @@ import (
 type Server struct {
 	Config     ServerConfig
 	Subscriber interface {
-		Subscribe(context.Context, *websocket.Conn) error
+		Subscribe(context.Context, WSConn) (errc <-chan error, done func())
 	}
 	Log *log.Logger
 	Mux *http.ServeMux
@@ -74,14 +74,14 @@ func (s Server) newWebSocketHandler() http.HandlerFunc {
 		}
 		defer conn.Close(websocket.StatusInternalError, "")
 
-		err = s.Subscriber.Subscribe(r.Context(), conn)
-		if errors.Is(err, context.Canceled) ||
+		errc, done := s.Subscriber.Subscribe(r.Context(), conn)
+		defer done()
+		if err := <-errc; errors.Is(err, context.Canceled) ||
 			websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
 			websocket.CloseStatus(err) == websocket.StatusGoingAway {
 			s.Log.Printf("INFO: websocket subscriber disconnected: %s", err)
 			return
-		}
-		if err != nil {
+		} else if err != nil {
 			s.Log.Printf("ERROR: websocket subscriber failed: %s", err)
 			return
 		}

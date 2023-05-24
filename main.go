@@ -42,7 +42,6 @@ func run(ctx context.Context, log *log.Logger) error {
 	if err := args.APIClientConfig.Env(); err != nil {
 		return fmt.Errorf("failed to setup api client config: %w", err)
 	}
-
 	pubSub := &PubSub[[]json.RawMessage]{
 		Config: args.PubSubConfig,
 		Log:    log,

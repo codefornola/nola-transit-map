@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"sync"
 	"time"
 
 	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
 )
 
 // PubSub controls a set of Subscribers and publishes messages to them.
@@ -43,6 +44,10 @@ func (ps *PubSub[U]) init(_ context.Context) {
 // Publish writes a message to each subscriber.
 func (ps *PubSub[U]) Publish(ctx context.Context, msg U) {
 	ps.init(ctx)
+	ps.publish(ctx, msg)
+}
+
+func (ps *PubSub[U]) publish(ctx context.Context, msg U) {
 	ps.cacheMu.Lock()
 	ps.cache = msg
 	ps.cacheMu.Unlock()
@@ -59,9 +64,93 @@ func (ps *PubSub[U]) Publish(ctx context.Context, msg U) {
 	}
 }
 
+type WSConn interface {
+	Close(websocket.StatusCode, string) error
+	CloseRead(context.Context) context.Context
+	Writer(context.Context, websocket.MessageType) (io.WriteCloser, error)
+}
+
+// Subscribe creates a Subscriber for long-running websocket writes.
+// errc reports when an error occurs during Subscriber.Listen.
+// Use done to cleanup resources.
+func (ps *PubSub[U]) Subscribe(ctx context.Context, conn WSConn) (errc <-chan error, done func()) {
+	ps.init(ctx)
+	return ps.subscribe(ctx, conn)
+}
+
+func (ps *PubSub[U]) subscribe(ctx context.Context, conn WSConn) (<-chan error, func()) {
+	sub := NewSubscriber[U](ps.Config, conn)
+	ps.mu.Lock()
+	ps.subMap[sub] = struct{}{}
+	ps.mu.Unlock()
+
+	// send the cached messages
+	ps.cacheMu.RLock()
+	if !reflect.ValueOf(ps.cache).IsZero() {
+		sub.In <- ps.cache
+	}
+	ps.cacheMu.RUnlock()
+
+	return sub.Listen(ctx), func() {
+		ps.mu.Lock()
+		delete(ps.subMap, sub)
+		ps.mu.Unlock()
+		close(sub.In)
+	}
+}
+
 type Subscriber[U any] struct {
-	In   chan U
-	conn *websocket.Conn
+	In      chan U
+	conn    WSConn
+	timeout time.Duration
+}
+
+func NewSubscriber[U any](cfg PubSubConfig, conn WSConn) Subscriber[U] {
+	return Subscriber[U]{
+		In:      make(chan U, cfg.BufferSize),
+		conn:    conn,
+		timeout: cfg.Timeout,
+	}
+}
+
+// write encodes json messages to the conn.
+// inspired by https://github.com/nhooyr/websocket/blob/v1.8.7/wsjson/wsjson.go
+func (s Subscriber[U]) write(ctx context.Context, msg U) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	wc, err := s.conn.Writer(ctx, websocket.MessageText)
+	if err != nil {
+		return fmt.Errorf("open conn writer failed: %w", err)
+	}
+	if err := json.NewEncoder(wc).Encode(msg); err != nil {
+		return fmt.Errorf("write messages failed: %w", err)
+	}
+	return wc.Close()
+}
+
+// Listen ingests messages until failure or cancel.
+func (s Subscriber[U]) Listen(ctx context.Context) <-chan error {
+	errc := make(chan error, 1)
+	go func() {
+		ctx, cancel := context.WithCancel(s.conn.CloseRead(ctx))
+		defer cancel()
+		for {
+			select {
+			case msg, ok := <-s.In:
+				if !ok {
+					break
+				}
+				if err := s.write(ctx, msg); err != nil {
+					errc <- fmt.Errorf("subscriber write failed: %w", err)
+					return
+				}
+			case <-ctx.Done():
+				errc <- ctx.Err()
+				return
+			}
+		}
+	}()
+	return errc
 }
 
 func (s Subscriber[U]) CloseSlow() {
@@ -69,45 +158,4 @@ func (s Subscriber[U]) CloseSlow() {
 		websocket.StatusPolicyViolation,
 		"connection too slow to keep up with messages",
 	)
-}
-
-// Subscribe maintains long-running websocket writes.
-func (ps *PubSub[U]) Subscribe(ctx context.Context, conn *websocket.Conn) error {
-	ps.init(ctx)
-	ctx = conn.CloseRead(ctx)
-	sub := Subscriber[U]{
-		In:   make(chan U, ps.Config.BufferSize),
-		conn: conn,
-	}
-	ps.mu.Lock()
-	ps.subMap[sub] = struct{}{}
-	ps.mu.Unlock()
-	defer func() {
-		ps.mu.Lock()
-		delete(ps.subMap, sub)
-		ps.mu.Unlock()
-		close(sub.In)
-	}()
-
-	// send the cached results
-	if !reflect.ValueOf(ps.cache).IsZero() {
-		ps.cacheMu.RLock()
-		sub.In <- ps.cache
-		ps.cacheMu.RUnlock()
-	}
-
-	for {
-		select {
-		case msg := <-sub.In:
-			{
-				ctx, cancel := context.WithTimeout(ctx, ps.Config.Timeout)
-				defer cancel()
-				if err := wsjson.Write(ctx, conn, msg); err != nil {
-					return fmt.Errorf("write messages failed: %w", err)
-				}
-			}
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }
