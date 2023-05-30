@@ -7,7 +7,7 @@ build:
 	go build
 
 run:
-	./nola-transit-map $(ARGS)
+	./nola-transit-map
 
 show:
 	open http://localhost:8080
