@@ -51,7 +51,7 @@ func (a *APIClient[U, V]) init(ctx context.Context) (err error) {
 			Path:   "/bustime/api/v3/getvehicles",
 			RawQuery: url.Values(map[string][]string{
 				"key":          {a.Config.Key},
-				"tmres":        {"m"},
+				"tmres":        {"s"},
 				"rtpidatafeed": {"bustime"},
 				"format":       {"json"},
 			}).Encode(),
