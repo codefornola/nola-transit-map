@@ -67,7 +67,11 @@ func (s Server) routes(ctx context.Context) {
 // newWebSocketHandler upgrades a request to a long-running websocket connection.
 func (s Server) newWebSocketHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		conn, err := websocket.Accept(w, r, nil)
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+			// prevents kNWErrorDomainPOSIX error on safari
+			// https://github.com/nhooyr/websocket/issues/218
+			CompressionMode: websocket.CompressionDisabled,
+		})
 		if err != nil {
 			s.Log.Printf("websocket upgrade failed: %s", err)
 			return
