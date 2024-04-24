@@ -22,3 +22,6 @@ node_modules
 nola-transit-map
 
 .DS_Store
+
+#generated temp route files
+data/route_*
