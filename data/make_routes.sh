@@ -95,5 +95,5 @@ EOF
 echo "=== RTA ==="
 add_features_from_GTFS https://www.norta.com/RTA/media/GTFS/GTFS.zip
 
-#echo "=== JP TRANSIT ==="
-#add_features_from_GTFS https://rideneworleans.org/wp/wp-content/uploads/GTFS-JET-20240913.zip
+echo "=== JP TRANSIT ==="
+add_features_from_GTFS https://rideneworleans.org/wp/wp-content/uploads/GTFS-JET-20240913.zip
