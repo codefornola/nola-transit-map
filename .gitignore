@@ -25,3 +25,5 @@ nola-transit-map
 
 #generated temp route files
 data/route_*
+data/*.txt
+data/*.zip

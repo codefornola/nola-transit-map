@@ -1,49 +1,99 @@
 #!/bin/sh
 
 #init list of routes
-jq . > routes.json << EOF
+cat > routes.json << EOF
 {
-"type": "FeatureCollection",
-"name": "routes",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": []
+ "type": "FeatureCollection",
+ "name": "routes",
+ "crs": {
+   "type": "name", 
+   "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+ },
+ "features": []
 }
 EOF
 
-for route in 12 46 47 48 49 1 4 3 8 9 11 27 31 32 45 51 52 53-O 55 57 61 62 62-O 66 67 68 80 84 86 91 103 105 114A 114B 201 202; do
+add_features_from_GTFS () {
+  url=$1
 
-  echo "ROUTE $route"
+  #get GTFS data
+  wget -O GTFS.zip "$url"
+  unzip -o GTFS.zip
 
-  #get stops and lines for each route direction
-  for dir in 0 1; do
-    wget -q -O route_${route}_dir${dir} "https://www.norta.com/RTAGetRoute?routeID=${route}&directionID=${dir}"
-    cat route_${route}_dir${dir} | jq -c '{type: "MultiPoint", coordinates: .[0].stops | [.[] | [.stopLongitude, .stopLatitude]]}' > route_${route}_dir${dir}_stops
-    cat route_${route}_dir${dir} | jq -c '{type: "MultiLineString", coordinates: [.[0].lines[0].latLongList | [.[] | [.shapeLog, .shapeLat]]]}' > route_${route}_dir${dir}_lines
+  routes=$(tail -n +2 routes.txt | cut -d "," -f 1)
 
-    #fix bogus RTA datapoints
-    if [ "$route" = "57" ] && [ "$dir" = "0" ]; then
-      sed -i -e 's/\"-90.054342\",\"29.968979\"/\"-90.05486\",\"29.97270\"/g' route_${route}_dir${dir}_stops
-      sed -i -e 's/\[\"-90.055450\",\"29.972701\"\].*\[\"-90.052978\",\"29.972807\"\]/\[\"-90.05486\",\"29.97270\"\]/g' route_${route}_dir${dir}_lines
-    fi
+  #routes.txt lists as '53-O', but shapes.txt has it as just 53. fix it here
+  routes=${routes/53-O/53}
+
+  for route in $routes; do
+    echo "ROUTE $route"
+
+    #get geometry/stops for every direction
+    dirs=$(grep "\-${route}-" shapes.txt | cut -d ',' -f 1 | sort | uniq | cut -d '-' -f 3)
+    dir_index=0
+    for dir in $dirs; do
+      echo " DIR $dir_index: $dir"
+
+      #convert shapes.txt lat/lons into geojson LineString
+      (head -1 shapes.txt; grep "shp-$route-$dir" shapes.txt) |
+        jq -c -R -s 'include "csv2json"; csv2json | {type: "LineString", coordinates: [.[] | [.shape_pt_lon, .shape_pt_lat]]}' \
+        > route_${route}_dir${dir_index}_lines
+
+      #convert stops.txt lat/lons into geojson MutliPoint
+      #NOTE: since stops.txt doesnt have route info, correlate by matching route lat/lon with stops lat/lon
+      (echo "stop_lat,stop_lon"; cat stops.txt | cut -d "," -f 5-6 | grep -f <(grep "shp-$route-$dir" shapes.txt | cut -d "," -f 2-3)) |
+        jq -c -R -s 'include "csv2json"; csv2json | {type: "MultiPoint", coordinates: [.[] | [.stop_lon, .stop_lat]]}' \
+        > route_${route}_dir${dir_index}_stops
+
+      dir_index=$(($dir_index+1))
+    done
+
+    #convert routes.txt entry to json route header
+    (head -1 routes.txt; grep -e "^${route}," routes.txt ) |
+      jq -c -R -s -f <(cat << EOF
+        include "csv2json"; csv2json | .[0] |
+          {
+            type: "Feature",
+            properties: { 
+              route_id: .route_short_name,
+              agency_id: .agency_id,
+              route_short_name: .route_short_name,
+              route_long_name: .route_long_name,
+              route_type: .route_type,
+              route_color: "\("#")\(.route_color)",
+              route_text_color: "\("#")\(.route_text_color)",
+            },
+            geometry: { type: "GeometryCollection", geometries: [] }
+          }
+EOF
+    ) > route_${route}_header
+
+    #combine header/stops/lines into single geometrycollection for route
+    filter="'.geometry.geometries += "
+    spacer=""
+    slurps=""
+    dir_index=0
+    for dir in $dirs; do
+      filter="${filter}${spacer}\$stops${dir_index} + \$lines${dir_index}"
+      slurps="$slurps --slurpfile lines${dir_index} route_${route}_dir${dir_index}_lines"
+      slurps="$slurps --slurpfile stops${dir_index} route_${route}_dir${dir_index}_stops"
+
+      dir_index=$(($dir_index+1))
+      spacer=" + "
+    done
+    filter="$filter'"
+    cmd="jq $filter route_${route}_header "$slurps" > route_${route}_feature"
+    bash -c "$cmd"
+
+    #add to list of routes
+    jq -c '.features += $feature' routes.json --slurpfile feature route_${route}_feature > routes.json.tmp
+    mv routes.json.tmp routes.json
+
   done
+}
 
-  #remove duplicate second direction info if identical to first
-  if cmp --silent -- "route_${route}_dir0_lines" "route_${route}_dir1_lines"; then
-    echo "" > route_${route}_dir1_lines
-  fi
-  if cmp --silent -- "route_${route}_dir0_stops" "route_${route}_dir1_stops"; then
-    echo "" > route_${route}_dir1_stops
-  fi
+echo "=== RTA ==="
+add_features_from_GTFS https://www.norta.com/RTA/media/GTFS/GTFS.zip
 
-  #for header just use direction0 to get route name, etc
-  cat route_${route}_dir0 | jq '.[0] | {type: "Feature", properties: { agency_name: "NORTA", route_id: .routeCode, agency_id: "1", route_short_name: .routeCode, route_long_name: .routeName, route_type: 3, route_color: ("#" + .routeColor), route_text_color: "#000000" }, geometry: {type: "GeometryCollection", geometries: []}}' > route_${route}_header
-
-  #combine stops and lines into geometrycollection
-  jq '.geometry.geometries += $stops0 + $stops1 + $lines0 + $lines1' route_${route}_header --slurpfile stops0 route_${route}_dir0_stops --slurpfile stops1 route_${route}_dir1_stops --slurpfile lines0 route_${route}_dir0_lines --slurpfile lines1 route_${route}_dir1_lines > route_${route}_feature
-
-  #add to list of routes
-  jq -c '.features += $feature' routes.json --slurpfile feature route_${route}_feature > routes.json.tmp
-  mv routes.json.tmp routes.json
-
-done
-
+#echo "=== JP TRANSIT ==="
+#add_features_from_GTFS https://rideneworleans.org/wp/wp-content/uploads/GTFS-JET-20240913.zip
