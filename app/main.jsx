@@ -71,9 +71,6 @@ function timestampDisplay (timestamp) {
     return minutes + ' minutes ago';
 }
 
-const scheme = window.location.protocol == "http:" ? "ws" : "wss"
-const url = `${scheme}://${window.location.hostname}:${window.location.port}/ws`
-const conn = new WebSocket(url);
 
 class App extends React.Component {
     constructor(props) {
@@ -85,21 +82,33 @@ class App extends React.Component {
             connected: false,
             lastUpdate: new Date(),
             now: new Date(),
+            websocket: null,
         }
         this.handleRouteChange = this.handleRouteChange.bind(this)
     }
 
     componentWillMount() {
-        conn.onopen = () => {
-            console.log("Websocket Open")
-            this.setState({ connected: true })
-        }
-        conn.onclose = () => {
-            console.log("Closing websocket")
-            this.setState({ connected: false })
-        }
-        conn.onmessage = (evt) => {
-            console.log('onmessage');
+        this.connectWebSocket();
+        this.interval = setInterval(() => this.setState({ now: Date.now() }), 1000);
+    }
+
+    componentWillUnmount() {
+        this.closeWebSocket();
+        clearInterval(this.interval)
+    }
+
+    connectWebSocket = () => {
+        const scheme = window.location.protocol == "http:" ? "ws" : "wss"
+        const url = `${scheme}://${window.location.hostname}:${window.location.port}/ws`
+        const websocket = new WebSocket(url);
+
+        websocket.onopen = () => {
+            console.log('Websocket connected');
+            this.setState({ connected: true });
+        };
+
+        websocket.onmessage = (evt) => {
+            console.log('WebSocket message');
             if (!this.state.connected) this.setState({ connected: true })
             const vehicles = JSON.parse(evt.data)
             const lastUpdate = new Date()
@@ -108,13 +117,30 @@ class App extends React.Component {
                 lastUpdate,
             })
             console.dir(vehicles)
-        }
-        this.interval = setInterval(() => this.setState({ now: Date.now() }), 1000);
-    }
+        };
 
-    componentWillUnmount() {
-        clearInterval(this.interval)
-    }
+        websocket.onclose = () => {
+            console.log('WebSocket closed');
+            this.setState({ connected: false });
+
+            setTimeout(this.connectWebSocket, 5000);
+        };
+
+        websocket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            this.setState({ connected: false });
+
+            setTimeout(this.connectWebSocket, 5000);
+        };
+
+        this.setState({ websocket });
+    };
+
+    closeWebSocket = () => {
+        if (this.state.websocket) {
+            this.state.websocket.close();
+        }
+    };
 
     routeComponents() {
         if (this.state.routes.length === 0) return Object.values(ROUTES)
@@ -163,7 +189,7 @@ class App extends React.Component {
     notConnectedScreen() {
         return <Row className="justify-content-md-center">
             <Col md="auto">
-                <p>Looks like you aren't connected. Maybe try refreshing the page. If it's not working please <a href="https://github.com/codefornola/nola-transit-map/issues">get in touch with us</a>.</p>
+                <p>Connection broken. Attempting to reconnect...</p>
             </Col>
         </Row>
     }
