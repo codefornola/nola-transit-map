@@ -15,7 +15,7 @@ getting around the city extremely frustrating. This map is just a stop gap to ge
 
 Join #civic-hacking in Nola Devs Slack channel, where this project is discussed: https://nola.slack.com/join/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ.
 
-The API key is coveted. Only a few chosen ones will be granted access, hence the included mock server that is used in DEV mode.
+The API key is a protected secret. Only a few have access, hence the included mock server that is used in DEV mode.
 
 You need a few things on your machine to build the project. If you are an `asdf` user there is a .tool-versions file with acceptable versions of node, npm, and go, but not make to keep from conflicting with system build tools.
 
