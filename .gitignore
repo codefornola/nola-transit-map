@@ -20,5 +20,6 @@ go.work
 node_modules
 
 nola-transit-map
+server
 
 .DS_Store

@@ -1,0 +1,34 @@
+{
+	"bustime-response": {
+		"vehicle": [
+			{
+				"vid": "155",
+				"tmstmp": "20200827 11:51",
+				"lat": "29.962149326173048",
+				"lon": "-90.05214051918121",
+				"hdg": "357",
+				"pid": 275,
+				"rt": "5",
+				"des": "Saratoga at Canal",
+				"pdist": 10122,
+				"dly": false,
+				"spd": 20,
+				"tatripid": "3130339",
+				"tablockid": "15",
+				"zone": "",
+				"srvtmstmp": "20200827 11:51",
+				"oid": "445",
+				"or": true,
+				"rid": "501",
+				"blk": 2102,
+				"tripid": 982856020
+			}
+		],
+		"error": [
+			{
+				"rt": "5",
+				"msg": "No clue what this message should look like."
+			}
+		]
+	}
+}

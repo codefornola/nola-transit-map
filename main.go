@@ -30,6 +30,8 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
+
+	DEV = false
 )
 
 type VehicleTimestamp struct {
@@ -127,13 +129,16 @@ type BustimeResponse struct {
 type Config struct {
 	Key      string        `yaml:"key"`
 	Interval time.Duration `yaml:"interval"`
-	Url      string        `yaml:"url"`
+	BaseUrl  string        `yaml:"url"`
 }
 
 type Scraper struct {
 	client *http.Client
 	config *Config
 }
+
+const cleverDevicesUrlFormatter = "https://%s/bustime/api/v3/getvehicles"
+const mockCleverDevicesUrl = "http://localhost:8081/getvehicles"
 
 func NewScraper() *Scraper {
 	api_key, ok := os.LookupEnv("CLEVER_DEVICES_KEY")
@@ -145,16 +150,22 @@ func NewScraper() *Scraper {
 		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
 	}
 
+	baseUrl := fmt.Sprintf(cleverDevicesUrlFormatter, ip)
+	if DEV {
+		baseUrl = mockCleverDevicesUrl
+	}
 	config := &Config{
-		Url:      fmt.Sprintf("https://%s/bustime/api/v3/getvehicles", ip),
+		BaseUrl:  baseUrl,
 		Interval: 10 * time.Second,
 		Key:      api_key,
 	}
+
 	tr := &http.Transport{
 		MaxIdleConnsPerHost: 1024,
 		TLSHandshakeTimeout: 0 * time.Second,
 	}
 	client := &http.Client{Transport: tr}
+
 	return &Scraper{
 		client,
 		config,
@@ -170,16 +181,24 @@ func (s *Scraper) Start(vs chan []Vehicle) {
 	}
 }
 
+const vehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
+
 func (v *Scraper) fetch() *BustimeData {
 	key := v.config.Key
-	baseURL := v.config.Url
-	url := fmt.Sprintf("%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json", baseURL, key)
+	baseURL := v.config.BaseUrl
+	url := fmt.Sprintf(vehicleQueryFormatter, baseURL, key)
+	if DEV {
+		url = fmt.Sprintf(baseURL)
+		log.Printf("Using mock bustime server URL %s \n", baseURL)
+	}
 	resp, err := v.client.Get(url)
+	log.Println("Scraper response:", resp)
+
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		log.Println(err)
+		log.Println("ERROR: Scraper response error: ", err)
 	}
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
@@ -220,10 +239,9 @@ func (b *VehicleBroadcaster) Unregister(c VehicleChannel) {
 }
 
 func (b *VehicleBroadcaster) Start() {
-	//config := bustime.GetConfig()
 	scraper := NewScraper()
 	defer scraper.Close()
-	log.Println("start sraper")
+	log.Println("Start scraper")
 	go scraper.Start(b.incoming)
 	b.broadcast()
 }
@@ -341,6 +359,14 @@ func (s *Server) serveWs(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// in DEV mode if the env var exists
+	if _, exists := os.LookupEnv("DEV"); exists {
+		DEV = true
+		log.Println("Set to DEV mode.")
+	}
+
 	server := NewServer()
 	server.Start()
+
+	log.Printf("\n", server)
 }
