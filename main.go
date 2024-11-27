@@ -189,21 +189,20 @@ func (v *Scraper) fetch() *BustimeData {
 	url := fmt.Sprintf(vehicleQueryFormatter, baseURL, key)
 	if DEV {
 		url = baseURL
-		log.Printf("Using mock bustime server URL %s \n", baseURL)
+		log.Println("Using mock bustime server.")
 	}
 	log.Println("Scraper URL:", url)
 	resp, err := v.client.Get(url)
-	log.Println("Scraper response:", resp)
-
+	if err != nil {
+		log.Println("ERROR: Scraper response:", err)
+	}
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
-	if err != nil {
-		log.Println("ERROR: Scraper response error: ", err)
-	}
+	log.Println("Scraper response:", resp)
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
-		log.Fatal(readErr)
+		log.Fatal("ERROR: Scraper response reader:", readErr)
 	}
 
 	result := &BustimeResponse{}
@@ -242,7 +241,7 @@ func (b *VehicleBroadcaster) Unregister(c VehicleChannel) {
 func (b *VehicleBroadcaster) Start() {
 	scraper := NewScraper()
 	defer scraper.Close()
-	log.Println("Start scraper")
+	log.Println("Starting scraper")
 	go scraper.Start(b.incoming)
 	b.broadcast()
 }
