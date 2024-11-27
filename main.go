@@ -22,6 +22,19 @@ const (
 
 	// Send pings to client with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
+
+	// Use in place of Clever Devices URL when in DEV mode
+	mockCleverDevicesUrl = "http://localhost:8081/getvehicles"
+
+	// Clever Devices API URL: http://[host:port]/bustime/api/v3/getvehicles
+	// http://ride.smtd.org/bustime/apidoc/docs/DeveloperAPIGuide3_0.pdf
+	cleverDevicesUrlFormatter = "https://%s/bustime/api/v3/getvehicles"
+
+	// Append to Clever Devices base url (above).
+	// tmres=m -> time resolution: minute.
+	// rtpidatafeed=bustime -> specify the bustime data feed.
+	// format=json -> respond with json (as opposed to XML).
+	vehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
 )
 
 var (
@@ -137,9 +150,6 @@ type Scraper struct {
 	config *Config
 }
 
-const cleverDevicesUrlFormatter = "https://%s/bustime/api/v3/getvehicles"
-const mockCleverDevicesUrl = "http://localhost:8081/getvehicles"
-
 func NewScraper() *Scraper {
 	api_key, ok := os.LookupEnv("CLEVER_DEVICES_KEY")
 	if !ok {
@@ -180,8 +190,6 @@ func (s *Scraper) Start(vs chan []Vehicle) {
 		time.Sleep(s.config.Interval)
 	}
 }
-
-const vehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
 
 func (v *Scraper) fetch() *BustimeData {
 	key := v.config.Key
