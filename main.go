@@ -188,9 +188,10 @@ func (v *Scraper) fetch() *BustimeData {
 	baseURL := v.config.BaseUrl
 	url := fmt.Sprintf(vehicleQueryFormatter, baseURL, key)
 	if DEV {
-		url = fmt.Sprintf(baseURL)
+		url = baseURL
 		log.Printf("Using mock bustime server URL %s \n", baseURL)
 	}
+	log.Println("Scraper URL:", url)
 	resp, err := v.client.Get(url)
 	log.Println("Scraper response:", resp)
 
@@ -359,7 +360,6 @@ func (s *Server) serveWs(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// in DEV mode if the env var exists
 	if _, exists := os.LookupEnv("DEV"); exists {
 		DEV = true
 		log.Println("Set to DEV mode.")
@@ -367,6 +367,4 @@ func main() {
 
 	server := NewServer()
 	server.Start()
-
-	log.Printf("\n", server)
 }
