@@ -13,7 +13,7 @@ getting around the city extremely frustrating. This map is just a stop gap to ge
 
 ### Contributing
 
-Join #civic-hacking in Nola Devs Slack channel, where this project is discussed: https://nola.slack.com/join/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ.
+Join #civic-hacking in the Nola Devs Slack channel, where this project is discussed: https://nola.slack.com/join/shared_invite/zt-4882ja82-iGm2yO6KCxsi2aGJ9vnsUQ.
 
 The API key is a protected secret. Only a few have access, hence the included mock server that is used in DEV mode.
 
@@ -37,7 +37,7 @@ You need a few things on your machine to build the project. If you are an `asdf`
     make dev DEV=1
     ```
 
-3. (Optional) If working on the frontend, you probably want changes to trigger a build automatically. You'll still have to refresh the page to see changes. 
+3. (Optional) If working on the frontend, you probably want changes to trigger a JS build automatically. You'll still have to refresh the page to see changes. 
 _In a 3rd terminal_:
     ```
     # terminal tab 3 - React frontend
