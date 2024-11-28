@@ -34,7 +34,7 @@ You need a few things on your machine to build the project. If you are an `asdf`
 2. Run the main server _in another terminal_.
     ```
     # terminal tab 2 - Go backend
-    make dev DEV=1
+    make dev
     ```
 
 3. (Optional) If working on the frontend, you probably want changes to trigger a JS build automatically. You'll still have to refresh the page to see changes. 

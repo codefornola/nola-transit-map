@@ -1,6 +1,3 @@
-CLEVER_DEVICES_KEY?=""
-CLEVER_DEVICES_IP?=""
-
 build:
 	npm install
 	npm run build
@@ -13,8 +10,6 @@ show:
 	open http://localhost:8080
 
 ### DEV ###
-export CLEVER_DEVICES_KEY := DEV
-export CLEVER_DEVICES_IP := DEV
 
 mock:
 	cd mock_bustime_server && go build && ./server
@@ -22,7 +17,7 @@ mock:
 dev:
 	npm install
 	go build
-	./nola-transit-map || echo "Couldn't run the binary."
+	sh -c 'DEV=1 CLEVER_DEVICES_KEY=1 CLEVER_DEVICES_IP=1 ./nola-transit-map' || echo "Couldn't run the binary."
 
 watch:
 	npm run watch

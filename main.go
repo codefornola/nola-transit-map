@@ -34,7 +34,7 @@ const (
 	// tmres=m -> time resolution: minute.
 	// rtpidatafeed=bustime -> specify the bustime data feed.
 	// format=json -> respond with json (as opposed to XML).
-	vehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
+	cleverDevicesVehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
 )
 
 var (
@@ -194,7 +194,7 @@ func (s *Scraper) Start(vs chan []Vehicle) {
 func (v *Scraper) fetch() *BustimeData {
 	key := v.config.Key
 	baseURL := v.config.BaseUrl
-	url := fmt.Sprintf(vehicleQueryFormatter, baseURL, key)
+	url := fmt.Sprintf(cleverDevicesVehicleQueryFormatter, baseURL, key)
 	if DEV {
 		url = baseURL
 		log.Println("Using mock bustime server.")
@@ -207,7 +207,6 @@ func (v *Scraper) fetch() *BustimeData {
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
-	log.Println("Scraper response:", resp)
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
 		log.Fatal("ERROR: Scraper response reader:", readErr)
