@@ -195,10 +195,6 @@ func (v *Scraper) fetch() *BustimeData {
 	key := v.config.Key
 	baseURL := v.config.BaseUrl
 	url := fmt.Sprintf(cleverDevicesVehicleQueryFormatter, baseURL, key)
-	if DEV {
-		url = baseURL
-		log.Println("Using mock bustime server.")
-	}
 	log.Println("Scraper URL:", url)
 	resp, err := v.client.Get(url)
 	if err != nil {
