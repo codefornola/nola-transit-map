@@ -7,8 +7,6 @@ html, body, #main, main, .App, .leaflet-container {
     height: 100%;
     width: 100vw;
 }
-/* Need this hack to get transparency to work */
-.leaflet-marker-icon { background-color: transparent; border-color: transparent }
 
 :root {
     --primary: #7A278D;

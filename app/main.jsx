@@ -14,6 +14,9 @@ import CustomModal from './components/modal';
 import LocationMarker from './components/location';
 import './main.css';
 
+import busIcon from '../img/icon-mock-bus-front.png'
+import arrowIcon from '../img/arrow_offset.png'
+
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
     .features
@@ -25,20 +28,25 @@ const ROUTES = NortaGeoJson
         }
     }, {})
 
+const MARKER_ICON_SIZE = 24
+
 const iconVehicle = new L.Icon({
-    iconUrl: require('../img/arrow.png'),
-    iconRetinaUrl: require('../img/arrow.png'),
-    iconAnchor: null,
-    shadowUrl: null,
-    shadowSize: null,
-    shadowAnchor: null,
-    iconSize: new L.Point(24, 24),
+    iconUrl: busIcon,
+    iconRetinaUrl: busIcon,
+    iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE],
     className: 'leaflet-marker-icon'
 });
 
-const RotatedMarker = forwardRef(({ children, ...props }, forwardRef) => {
-    const markerRef = useRef();
+const iconArrow = new L.Icon({
+    iconUrl: arrowIcon,
+    iconRetinaUrl: arrowIcon,
+    // tall so arrow doesn't intersect vehicle
+    iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE * 2],
+    className: 'leaflet-marker-icon'
+});
 
+function ArrowMarker(props) {
+    const markerRef = useRef();
     const { rotationAngle, rotationOrigin } = props;
     useEffect(() => {
         const marker = markerRef.current;
@@ -47,23 +55,10 @@ const RotatedMarker = forwardRef(({ children, ...props }, forwardRef) => {
             marker.setRotationOrigin(rotationOrigin);
         }
     }, [rotationAngle, rotationOrigin]);
+    return <Marker ref={markerRef} {...props} />;
+};
 
-    return (
-        <Marker
-            ref={(ref) => {
-                markerRef.current = ref;
-                if (forwardRef) {
-                    forwardRef.current = ref;
-                }
-            }}
-            {...props}
-        >
-            {children}
-        </Marker>
-    );
-});
-
-function timestampDisplay (timestamp) {
+function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
     if (relativeTimestamp < 60000) { return 'less than a minute ago'; }
     const minutes = Math.round(relativeTimestamp / 60000);
@@ -139,12 +134,17 @@ class App extends React.Component {
                 const coords = [v.lat, v.lon].map(parseFloat)
                 const rotAng = parseInt(v.hdg, 10)
                 const relTime = timestampDisplay(v.tmstmp)
-                return <RotatedMarker key={v.vid} position={coords} icon={iconVehicle} rotationAngle={rotAng} rotationOrigin="center">
-                    <Popup>
-                        {v.rt}{v.des ? ' - ' + v.des : ''}
-                        <br/>{relTime}
-                    </Popup>
-                </RotatedMarker>
+                return (
+                    <div>
+                        <ArrowMarker key={v.vid + '_arrow'} position={coords} icon={iconArrow} rotationAngle={rotAng} rotationOrigin="center" />
+                        <Marker key={v.vid} position={coords} icon={iconVehicle} riseOnHover={true}>
+                            <Popup>
+                                {v.rt}{v.des ? ' - ' + v.des : ''}
+                                <br/>{relTime}
+                            </Popup>
+                        </Marker>
+                    </div>
+                )
             })
     }
 
