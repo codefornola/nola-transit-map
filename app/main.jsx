@@ -46,17 +46,21 @@ const iconArrow = new L.Icon({
 });
 
 function ArrowMarker(props) {
+    const { rotationAngle } = props;
     const markerRef = useRef();
-    const { rotationAngle, rotationOrigin } = props;
     useEffect(() => {
-        const marker = markerRef.current;
-        if (marker) {
-            marker.setRotationAngle(rotationAngle);
-            marker.setRotationOrigin(rotationOrigin);
-        }
-    }, [rotationAngle, rotationOrigin]);
-    return <Marker ref={markerRef} {...props} />;
-};
+        markerRef.current?.setRotationAngle(rotationAngle);
+    }, [rotationAngle]);
+    return <Marker ref={markerRef} {...props} icon={iconArrow} rotationOrigin="center" />;
+}
+
+function VehicleMarker({ children, ...props }) {
+    return (
+        <Marker {...props} icon={iconVehicle} riseOnHover={true}>
+            {children}
+        </Marker>
+    )
+}
 
 function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
@@ -135,14 +139,15 @@ class App extends React.Component {
                 const rotAng = parseInt(v.hdg, 10)
                 const relTime = timestampDisplay(v.tmstmp)
                 return (
-                    <div>
-                        <ArrowMarker key={v.vid + '_arrow'} position={coords} icon={iconArrow} rotationAngle={rotAng} rotationOrigin="center" />
-                        <Marker key={v.vid} position={coords} icon={iconVehicle} riseOnHover={true}>
+                    <div key={v.vid + '_container'}>
+                        <ArrowMarker key={v.vid + '_arrow'} position={coords} rotationAngle={rotAng} />
+                        <VehicleMarker key={v.vid} position={coords}>
                             <Popup>
                                 {v.rt}{v.des ? ' - ' + v.des : ''}
-                                <br/>{relTime}
+                                <br/>
+                                {relTime}
                             </Popup>
-                        </Marker>
+                        </VehicleMarker>
                     </div>
                 )
             })
@@ -171,10 +176,10 @@ class App extends React.Component {
     buildControlBar() {
         let connectionStatus = this.state.connected 
             ? <React.Fragment>
-                <span className="control-bar__connection-container connected"><BsFillCircleFill /><span class="control-bar__label-text">Connected</span></span>
+                <span className="control-bar__connection-container connected"><BsFillCircleFill /><span className="control-bar__label-text">Connected</span></span>
               </React.Fragment> 
             : <React.Fragment>
-                <span className="control-bar__connection-container not-connected"><BsFillCloudSlashFill /><span class="control-bar__label-text">Not Connected</span></span>
+                <span className="control-bar__connection-container not-connected"><BsFillCloudSlashFill /><span className="control-bar__label-text">Not Connected</span></span>
               </React.Fragment>
 
         if (this.state.connected && this.lagging()) connectionStatus = 
@@ -197,8 +202,8 @@ class App extends React.Component {
             return { value: r, label: r }
         })
 
-        return <div class="control-bar">
-                    <label class="control-bar__filter-label"><span class="control-bar__label-text">Filter Routes:</span>
+        return <div className="control-bar">
+                    <label className="control-bar__filter-label"><span className="control-bar__label-text">Filter Routes:</span>
                         <Select
                             closeMenuOnSelect={false}
                             components={animatedComponents}
