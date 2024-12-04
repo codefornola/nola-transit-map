@@ -40726,6 +40726,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       })
     };
   }, {});
+  var NOT_IN_SERVICE_ROUTES = ["U", "PO", "PI"];
   var MARKER_ICON_SIZE = 24;
   var iconArrow = new import_leaflet8.default.Icon({
     iconUrl: arrow_offset_default,
@@ -40808,7 +40809,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
         console.log("onmessage");
         if (!this.state.connected)
           this.setState({ connected: true });
-        const vehicles = JSON.parse(evt.data);
+        const vehicles = JSON.parse(evt.data).filter((v2) => !NOT_IN_SERVICE_ROUTES.includes(v2.rt));
         const lastUpdate = new Date();
         this.setState({
           vehicles,
@@ -40893,8 +40894,9 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
         }, /* @__PURE__ */ import_react28.default.createElement("p", null, "No Vehicles found yet. Are you connected?")));
       }
       const routes = [...new Set(this.state.vehicles.map((v2) => v2.rt))];
-      const routeOptions = routes.map((r2) => {
-        return { value: r2, label: r2 };
+      const routeOptions = routes.map((rt) => {
+        const name = vehicle_types_default[rt].name.replace(" ", " :: ");
+        return { value: rt, label: name };
       });
       return /* @__PURE__ */ import_react28.default.createElement("div", {
         className: "control-bar"

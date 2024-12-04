@@ -220,8 +220,9 @@ class App extends React.Component {
         }
 
         const routes = [...new Set(this.state.vehicles.map(v => v.rt))]
-        const routeOptions = routes.map(r => {
-            return { value: r, label: r }
+        const routeOptions = routes.map(rt => {
+            const name = vehicleTypes[rt].name.replace(' ', ' :: ')
+            return { value: rt, label: name }
         })
 
         return <div className="control-bar">
