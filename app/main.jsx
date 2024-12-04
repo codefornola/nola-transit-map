@@ -14,7 +14,11 @@ import CustomModal from './components/modal';
 import LocationMarker from './components/location';
 import './main.css';
 
-import busIcon from '../img/icon-mock-bus-front.png'
+import vehicleTypes from '../data/vehicle_types.json'
+import busIcon from '../img/icon-mock-bus.png'
+import streetcarIcon from '../img/icont-mock-streetcar.png'
+import ferryIcon from '../img/icon-mock-ferry.png'
+import errorIcon from '../img/icon-vehicle-error.png'
 import arrowIcon from '../img/arrow_offset.png'
 
 const animatedComponents = makeAnimated();
@@ -28,19 +32,17 @@ const ROUTES = NortaGeoJson
         }
     }, {})
 
-const MARKER_ICON_SIZE = 24
+// These routes don't exist at NORTA.com
+// When a vehicle enters its garage, its route becomes 'U'
+// The definition of PO and PI routes is unknown -> filter out for now
+const NOT_IN_SERVICE_ROUTES = ['U', 'PO', 'PI']
 
-const iconVehicle = new L.Icon({
-    iconUrl: busIcon,
-    iconRetinaUrl: busIcon,
-    iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE],
-    className: 'leaflet-marker-icon'
-});
+const MARKER_ICON_SIZE = 24
 
 const iconArrow = new L.Icon({
     iconUrl: arrowIcon,
     iconRetinaUrl: arrowIcon,
-    // tall so arrow doesn't intersect vehicle
+    // Tall so arrow doesn't intersect vehicle (& match aspect ratio of graphic)
     iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE * 2],
     className: 'leaflet-marker-icon'
 });
@@ -54,9 +56,26 @@ function ArrowMarker(props) {
     return <Marker ref={markerRef} {...props} icon={iconArrow} rotationOrigin="center" />;
 }
 
+function vehicleIcon(image) {
+    return new L.Icon({
+        iconUrl: image,
+        iconRetinaUrl: image,
+        iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE],
+        className: 'leaflet-marker-icon'
+    });
+}
+
+const vehicleIcons = Object.freeze({
+    ferry: vehicleIcon(ferryIcon),
+    streetcar: vehicleIcon(streetcarIcon),
+    bus: vehicleIcon(busIcon),
+    error: vehicleIcon(errorIcon),
+})
+
 function VehicleMarker({ children, ...props }) {
+    const { type } = props
     return (
-        <Marker {...props} icon={iconVehicle} riseOnHover={true}>
+        <Marker {...props} icon={vehicleIcons[type]} riseOnHover={true}>
             {children}
         </Marker>
     )
@@ -101,12 +120,14 @@ class App extends React.Component {
             console.log('onmessage');
             if (!this.state.connected) this.setState({ connected: true })
             const vehicles = JSON.parse(evt.data)
+                // filter out unused vehicles
+                .filter(v => !NOT_IN_SERVICE_ROUTES.includes(v.rt))
             const lastUpdate = new Date()
             this.setState({
                 vehicles,
                 lastUpdate,
             })
-            console.dir(vehicles)
+            // console.dir(vehicles)
         }
         this.interval = setInterval(() => this.setState({ now: Date.now() }), 1000);
     }
@@ -138,10 +159,11 @@ class App extends React.Component {
                 const coords = [v.lat, v.lon].map(parseFloat)
                 const rotAng = parseInt(v.hdg, 10)
                 const relTime = timestampDisplay(v.tmstmp)
+                const type = vehicleTypes[v.rt]?.type ?? 'error'
                 return (
                     <div key={v.vid + '_container'}>
                         <ArrowMarker key={v.vid + '_arrow'} position={coords} rotationAngle={rotAng} />
-                        <VehicleMarker key={v.vid} position={coords}>
+                        <VehicleMarker key={v.vid} type={type} position={coords}>
                             <Popup>
                                 {v.rt}{v.des ? ' - ' + v.des : ''}
                                 <br/>
