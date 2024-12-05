@@ -39485,7 +39485,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       key: "renderMenu",
       value: function renderMenu() {
         var _this4 = this;
-        var _this$getComponents7 = this.getComponents(), Group3 = _this$getComponents7.Group, GroupHeading3 = _this$getComponents7.GroupHeading, Menu3 = _this$getComponents7.Menu, MenuList3 = _this$getComponents7.MenuList, MenuPortal3 = _this$getComponents7.MenuPortal, LoadingMessage3 = _this$getComponents7.LoadingMessage, NoOptionsMessage3 = _this$getComponents7.NoOptionsMessage, Option3 = _this$getComponents7.Option;
+        var _this$getComponents7 = this.getComponents(), Group3 = _this$getComponents7.Group, GroupHeading3 = _this$getComponents7.GroupHeading, Menu3 = _this$getComponents7.Menu, MenuList3 = _this$getComponents7.MenuList, MenuPortal3 = _this$getComponents7.MenuPortal, LoadingMessage3 = _this$getComponents7.LoadingMessage, NoOptionsMessage3 = _this$getComponents7.NoOptionsMessage, Option4 = _this$getComponents7.Option;
         var commonProps = this.commonProps;
         var focusedOption = this.state.focusedOption;
         var _this$props12 = this.props, captureMenuScroll = _this$props12.captureMenuScroll, inputValue = _this$props12.inputValue, isLoading = _this$props12.isLoading, loadingMessage2 = _this$props12.loadingMessage, minMenuHeight = _this$props12.minMenuHeight, maxMenuHeight = _this$props12.maxMenuHeight, menuIsOpen = _this$props12.menuIsOpen, menuPlacement = _this$props12.menuPlacement, menuPosition = _this$props12.menuPosition, menuPortalTarget = _this$props12.menuPortalTarget, menuShouldBlockScroll = _this$props12.menuShouldBlockScroll, menuShouldScrollIntoView = _this$props12.menuShouldScrollIntoView, noOptionsMessage2 = _this$props12.noOptionsMessage, onMenuScrollToTop = _this$props12.onMenuScrollToTop, onMenuScrollToBottom = _this$props12.onMenuScrollToBottom;
@@ -39508,7 +39508,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
             onMouseOver: onHover,
             tabIndex: -1
           };
-          return /* @__PURE__ */ React8.createElement(Option3, _extends2({}, commonProps, {
+          return /* @__PURE__ */ React8.createElement(Option4, _extends2({}, commonProps, {
             innerProps,
             data,
             isDisabled,
@@ -40715,6 +40715,12 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   var arrow_offset_default = "data:image/png;base64,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QAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0QSqABQgk0QCiBBggl0AChBBoglEADhBJogFACDRBKoAFCCTRAKIEGCCXQAKEEGiCUQAOEEmiAUAINEEqgAUIJNEAogQYIJdAAoQQaIJRAA4QSaIBQAg0Q6v8B15WqvF0xzHYAAAAASUVORK5CYII=";
 
   // app/main.jsx
+  var vehicleImages = Object.freeze({
+    ferry: icon_mock_ferry_default,
+    streetcar: icont_mock_streetcar_default,
+    bus: icon_mock_bus_default,
+    error: icon_vehicle_error_default
+  });
   var animatedComponents = react_select_animated_esm_default();
   var ROUTES = routes_default.features.filter((f2) => f2.geometry.type === "MultiLineString" && f2.properties.route_id).reduce((acc, f2) => {
     return {
@@ -40755,7 +40761,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       className: "leaflet-marker-icon"
     });
   }
-  var vehicleIcons = Object.freeze({
+  var vehicleMarkerIcons = Object.freeze({
     ferry: vehicleIcon(icon_mock_ferry_default),
     streetcar: vehicleIcon(icont_mock_streetcar_default),
     bus: vehicleIcon(icon_mock_bus_default),
@@ -40765,9 +40771,22 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     const { type } = props;
     return /* @__PURE__ */ import_react28.default.createElement(Marker, {
       ...props,
-      icon: vehicleIcons[type],
+      icon: vehicleMarkerIcons[type],
       riseOnHover: true
     }, children);
+  }
+  var { Option: Option3 } = components;
+  function RouteOption(props) {
+    const { data: { label, icon } } = props;
+    return /* @__PURE__ */ import_react28.default.createElement(Option3, {
+      ...props
+    }, /* @__PURE__ */ import_react28.default.createElement("img", {
+      src: icon,
+      alt: label,
+      width: "20",
+      height: "20",
+      className: "me-2"
+    }), label);
   }
   function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
@@ -40895,8 +40914,9 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       }
       const routes = [...new Set(this.state.vehicles.map((v2) => v2.rt))];
       const routeOptions = routes.map((rt) => {
-        const name = vehicle_types_default[rt].name.replace(" ", " :: ");
-        return { value: rt, label: name };
+        const label = vehicle_types_default[rt].name.replace(" ", " :: ");
+        const icon = vehicleImages[vehicle_types_default[rt].type];
+        return { value: rt, label, icon };
       });
       return /* @__PURE__ */ import_react28.default.createElement("div", {
         className: "control-bar"
@@ -40906,7 +40926,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
         className: "control-bar__label-text"
       }, "Filter Routes:"), /* @__PURE__ */ import_react28.default.createElement(react_select_esm_default, {
         closeMenuOnSelect: false,
-        components: animatedComponents,
+        components: { ...animatedComponents, Option: RouteOption },
         defaultValue: [],
         value: this.state.routes,
         isMulti: true,

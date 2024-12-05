@@ -8,18 +8,25 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import NortaGeoJson from '../data/routes.json';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Select from 'react-select'
+import Select, { components as SelectComponents } from 'react-select'
 import makeAnimated from 'react-select/animated';
 import CustomModal from './components/modal';
 import LocationMarker from './components/location';
 import './main.css';
 
-import vehicleTypes from '../data/vehicle_types.json'
+import routesInfo from '../data/routes_info.json'
 import busIcon from '../img/icon-mock-bus.png'
 import streetcarIcon from '../img/icont-mock-streetcar.png'
 import ferryIcon from '../img/icon-mock-ferry.png'
 import errorIcon from '../img/icon-vehicle-error.png'
 import arrowIcon from '../img/arrow_offset.png'
+
+const vehicleImages = Object.freeze({
+    ferry: ferryIcon,
+    streetcar: streetcarIcon,
+    bus: busIcon,
+    error: errorIcon,
+})
 
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
@@ -65,7 +72,7 @@ function vehicleIcon(image) {
     });
 }
 
-const vehicleIcons = Object.freeze({
+const vehicleMarkerIcons = Object.freeze({
     ferry: vehicleIcon(ferryIcon),
     streetcar: vehicleIcon(streetcarIcon),
     bus: vehicleIcon(busIcon),
@@ -75,9 +82,21 @@ const vehicleIcons = Object.freeze({
 function VehicleMarker({ children, ...props }) {
     const { type } = props
     return (
-        <Marker {...props} icon={vehicleIcons[type]} riseOnHover={true}>
+        <Marker {...props} icon={vehicleMarkerIcons[type]} riseOnHover={true}>
             {children}
         </Marker>
+    )
+}
+
+// React Select - add icons to route options
+const { Option } = SelectComponents
+function RouteOption(props) {
+    const { data: { label, icon } } = props
+    return (
+        <Option {...props}>
+            <img src={icon} alt={label} width="20" height="20" className="me-2"/>
+            {label}
+        </Option>
     )
 }
 
@@ -85,7 +104,7 @@ function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
     if (relativeTimestamp < 60000) { return 'less than a minute ago'; }
     const minutes = Math.round(relativeTimestamp / 60000);
-    if (minutes === 1) { return '1 minute ago'}
+    if (minutes === 1) { return '1 minute ago'; }
     return minutes + ' minutes ago';
 }
 
@@ -159,7 +178,7 @@ class App extends React.Component {
                 const coords = [v.lat, v.lon].map(parseFloat)
                 const rotAng = parseInt(v.hdg, 10)
                 const relTime = timestampDisplay(v.tmstmp)
-                const type = vehicleTypes[v.rt]?.type ?? 'error'
+                const type = routesInfo[v.rt]?.type ?? 'error'
                 return (
                     <div key={v.vid + '_container'}>
                         <ArrowMarker key={v.vid + '_arrow'} position={coords} rotationAngle={rotAng} />
@@ -221,15 +240,16 @@ class App extends React.Component {
 
         const routes = [...new Set(this.state.vehicles.map(v => v.rt))]
         const routeOptions = routes.map(rt => {
-            const name = vehicleTypes[rt].name.replace(' ', ' :: ')
-            return { value: rt, label: name }
+            const label = routesInfo[rt].name.replace(' ', ' :: ')
+            const icon = vehicleImages[routesInfo[rt].type]
+            return { value: rt, label, icon }
         })
 
         return <div className="control-bar">
                     <label className="control-bar__filter-label"><span className="control-bar__label-text">Filter Routes:</span>
                         <Select
                             closeMenuOnSelect={false}
-                            components={animatedComponents}
+                            components={{ ...animatedComponents, Option: RouteOption }}
                             defaultValue={[]}
                             value={this.state.routes}
                             isMulti
