@@ -19,16 +19,15 @@ import busIcon from '../img/icon-mock-bus.png'
 import streetcarIcon from '../img/icont-mock-streetcar.png'
 import ferryIcon from '../img/icon-mock-ferry.png'
 import errorIcon from '../img/icon-vehicle-error.png'
-import arrowIcon from '../img/arrow_offset.png'
+import arrowIcon from '../img/arrow-offset.png'
 
-const vehicleImages = Object.freeze({
+const VEHICLE_IMAGES = Object.freeze({
     ferry: ferryIcon,
     streetcar: streetcarIcon,
     bus: busIcon,
     error: errorIcon,
 })
 
-const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
     .features
     .filter(f => f.geometry.type === "MultiLineString" && f.properties.route_id)
@@ -46,7 +45,7 @@ const NOT_IN_SERVICE_ROUTES = ['U', 'PO', 'PI']
 
 const MARKER_ICON_SIZE = 24
 
-const iconArrow = new L.Icon({
+const ICON_ARROW = new L.Icon({
     iconUrl: arrowIcon,
     iconRetinaUrl: arrowIcon,
     // Tall so arrow doesn't intersect vehicle (& match aspect ratio of graphic)
@@ -60,7 +59,7 @@ function ArrowMarker(props) {
     useEffect(() => {
         markerRef.current?.setRotationAngle(rotationAngle);
     }, [rotationAngle]);
-    return <Marker ref={markerRef} {...props} icon={iconArrow} rotationOrigin="center" />;
+    return <Marker ref={markerRef} {...props} icon={ICON_ARROW} rotationOrigin="center" />;
 }
 
 function vehicleIcon(image) {
@@ -72,7 +71,7 @@ function vehicleIcon(image) {
     });
 }
 
-const vehicleMarkerIcons = Object.freeze({
+const VEHICLE_MARKER_ICONS = Object.freeze({
     ferry: vehicleIcon(ferryIcon),
     streetcar: vehicleIcon(streetcarIcon),
     bus: vehicleIcon(busIcon),
@@ -82,7 +81,7 @@ const vehicleMarkerIcons = Object.freeze({
 function VehicleMarker({ children, ...props }) {
     const { type } = props
     return (
-        <Marker {...props} icon={vehicleMarkerIcons[type]} riseOnHover={true}>
+        <Marker {...props} icon={VEHICLE_MARKER_ICONS[type]} riseOnHover={true}>
             {children}
         </Marker>
     )
@@ -99,6 +98,8 @@ function RouteOption(props) {
         </Option>
     )
 }
+
+const animatedComponents = makeAnimated();
 
 function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
@@ -241,7 +242,7 @@ class App extends React.Component {
         const routes = [...new Set(this.state.vehicles.map(v => v.rt))]
         const routeOptions = routes.map(rt => {
             const label = routesInfo[rt].name.replace(' ', ' :: ')
-            const icon = vehicleImages[routesInfo[rt].type]
+            const icon = VEHICLE_IMAGES[routesInfo[rt].type]
             return { value: rt, label, icon }
         })
 
