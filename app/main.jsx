@@ -185,7 +185,7 @@ class App extends React.Component {
                         <ArrowMarker key={v.vid + '_arrow'} position={coords} rotationAngle={rotAng} />
                         <VehicleMarker key={v.vid} type={type} position={coords}>
                             <Popup>
-                                {v.rt}{v.des ? ' - ' + v.des : ''}
+                                {v.rt}{v.des ? ' - ' + v.des.replace('>>', 'to') : ''}
                                 <br/>
                                 {relTime}
                             </Popup>
@@ -241,8 +241,12 @@ class App extends React.Component {
 
         const routes = [...new Set(this.state.vehicles.map(v => v.rt))]
         const routeOptions = routes.map(rt => {
-            const label = routesInfo[rt].name.replace(' ', ' :: ')
-            const icon = VEHICLE_IMAGES[routesInfo[rt].type]
+            let { name, type } = routesInfo[rt]
+            if (type === 'ferry' && !name.endsWith('Ferry')) name += ' Ferry'
+            if (type === 'streetcar' && !name.endsWith('Streetcar')) name += ' Streetcar'
+            if (type === 'bus' && !name.endsWith('Bus')) name += ' Bus'
+            const label = name.replace(' ', ' :: ')
+            const icon = VEHICLE_IMAGES[type]
             return { value: rt, label, icon }
         })
 

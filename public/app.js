@@ -40867,7 +40867,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
           key: v2.vid,
           type,
           position: coords
-        }, /* @__PURE__ */ import_react28.default.createElement(Popup, null, v2.rt, v2.des ? " - " + v2.des : "", /* @__PURE__ */ import_react28.default.createElement("br", null), relTime)));
+        }, /* @__PURE__ */ import_react28.default.createElement(Popup, null, v2.rt, v2.des ? " - " + v2.des.replace(">>", "to") : "", /* @__PURE__ */ import_react28.default.createElement("br", null), relTime)));
       });
     }
     mapContainer() {
@@ -40914,8 +40914,15 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       }
       const routes = [...new Set(this.state.vehicles.map((v2) => v2.rt))];
       const routeOptions = routes.map((rt) => {
-        const label = routes_info_default[rt].name.replace(" ", " :: ");
-        const icon = VEHICLE_IMAGES[routes_info_default[rt].type];
+        let { name, type } = routes_info_default[rt];
+        if (type === "ferry" && !name.endsWith("Ferry"))
+          name += " Ferry";
+        if (type === "streetcar" && !name.endsWith("Streetcar"))
+          name += " Streetcar";
+        if (type === "bus" && !name.endsWith("Bus"))
+          name += " Bus";
+        const label = name.replace(" ", " :: ");
+        const icon = VEHICLE_IMAGES[type];
         return { value: rt, label, icon };
       });
       return /* @__PURE__ */ import_react28.default.createElement("div", {
