@@ -40766,25 +40766,23 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       riseOnHover: true
     }, children);
   }
+  var selectAnimatedComponents = react_select_animated_esm_default();
   var { Option: SelectOption } = components;
   function RouteSelectOption(props) {
     const { data: { value, label, icon, color } } = props;
     return /* @__PURE__ */ import_react28.default.createElement(SelectOption, {
       ...props
     }, /* @__PURE__ */ import_react28.default.createElement("div", {
-      className: "react-select__option-wrapper"
+      className: "route-select-option__wrapper"
     }, /* @__PURE__ */ import_react28.default.createElement("div", {
-      className: "option-signifiers"
+      className: "route-and-icon"
     }, /* @__PURE__ */ import_react28.default.createElement("span", {
       style: { color }
     }, value), /* @__PURE__ */ import_react28.default.createElement("img", {
       src: icon,
       alt: label
-    })), /* @__PURE__ */ import_react28.default.createElement("span", {
-      className: "option-descriptor"
-    }, label)));
+    })), /* @__PURE__ */ import_react28.default.createElement("span", null, label)));
   }
-  var animatedComponents = react_select_animated_esm_default();
   function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
     if (relativeTimestamp < 6e4) {
@@ -40921,7 +40919,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
         className: "control-bar__filter-label"
       }, /* @__PURE__ */ import_react28.default.createElement(react_select_esm_default, {
         closeMenuOnSelect: false,
-        components: { ...animatedComponents, Option: RouteSelectOption },
+        components: { ...selectAnimatedComponents, Option: RouteSelectOption },
         defaultValue: [],
         value: this.state.routes,
         isMulti: true,

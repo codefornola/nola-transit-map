@@ -18,6 +18,7 @@ import busIconMap from '../img/icon_bus_fill_circle.png'
 import busIconSelect from '../img/icon_bus_fill_black.png'
 import streetcarIconMap from '../img/icon_streetcar_fill_circle.png'
 import streetcarIconSelect from '../img/icon_streetcar_fill_black.png'
+// TODO: awaiting real ferry icon
 import ferryIcon from '../img/icon_mock_ferry.png'
 import errorIcon from '../img/icon_vehicle_error.png'
 import arrowIcon from '../img/icon_arrow_offset.png'
@@ -120,6 +121,9 @@ function VehicleMarker({ children, ...props }) {
     )
 }
 
+// React Select animations
+const selectAnimatedComponents = makeAnimated()
+
 const { Option: SelectOption } = SelectComponents
 
 // custom React Select option - add icons and route colors to route options
@@ -127,18 +131,16 @@ function RouteSelectOption(props) {
     const { data: { value, label, icon, color } } = props
     return (
         <SelectOption {...props}>
-            <div className="react-select__option-wrapper">
-                <div className="option-signifiers">
+            <div className="route-select-option__wrapper">
+                <div className="route-and-icon">
                     <span style={{ color }}>{value}</span>
                     <img src={icon} alt={label}/>
                 </div>
-                <span className="option-descriptor">{label}</span>
+                <span>{label}</span>
             </div>
         </SelectOption>
     )
 }
-
-const animatedComponents = makeAnimated();
 
 function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
@@ -291,7 +293,7 @@ class App extends React.Component {
                     <label className="control-bar__filter-label">
                         <Select
                             closeMenuOnSelect={false}
-                            components={{ ...animatedComponents, Option: RouteSelectOption }}
+                            components={{ ...selectAnimatedComponents, Option: RouteSelectOption }}
                             defaultValue={[]}
                             value={this.state.routes}
                             isMulti
