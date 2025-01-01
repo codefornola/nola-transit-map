@@ -27,6 +27,7 @@ html, body, #main, main, .App, .leaflet-container {
     background: var(--primary);
     justify-content: space-between;
     display: flex;
+    flex-grow: 2 1;
     color: white;
     position: absolute;
     min-width: 35vw;
@@ -64,8 +65,10 @@ html, body, #main, main, .App, .leaflet-container {
 }
 
 .route-filter {
-    margin-left: 1rem;
+    /* margin-left: 1rem; */
     color: black;
+
+    min-width: 360px;
 }
 
 .about-button {
@@ -177,4 +180,39 @@ button {
         font-size: 0.7rem;
         padding: 0.5rem 0.75rem;
     }
+}
+
+.react-select__option-wrapper {
+    display: grid;
+    grid-template-columns: min-content auto;
+    align-items: center;
+    gap: 1rem;
+}
+
+.react-select__option-wrapper div {
+    width: 100%;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.react-select__option-wrapper .option-signifiers {
+    border-radius: unset;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-size: xx-large;
+}
+
+.react-select__option-wrapper > span {
+    display: block;
+    align-items: center;
+}
+
+.react-select__option-wrapper img {
+    width: 20px;
+    height: 20px;
 }
