@@ -40915,8 +40915,6 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       });
       return /* @__PURE__ */ import_react28.default.createElement("div", {
         className: "control-bar"
-      }, /* @__PURE__ */ import_react28.default.createElement("label", {
-        className: "control-bar__filter-label"
       }, /* @__PURE__ */ import_react28.default.createElement(react_select_esm_default, {
         closeMenuOnSelect: false,
         components: { ...selectAnimatedComponents, Option: RouteSelectOption },
@@ -40927,7 +40925,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
         onChange: this.handleRouteChange,
         className: "route-filter",
         placeholder: "Select Route(s)"
-      })), connectionStatus);
+      }), connectionStatus);
     }
     handleRouteChange(routes) {
       this.setState({ routes });

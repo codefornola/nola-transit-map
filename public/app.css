@@ -10343,24 +10343,19 @@ main,
   --alert: #FFC100;
 }
 .control-bar {
-  align-items: center;
-  background: var(--primary);
-  justify-content: space-between;
-  display: flex;
-  flex-grow: 2 1;
-  color: white;
   position: absolute;
   min-width: 35vw;
-  z-index: 1000;
   border-radius: 0 0 10px 0px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--primary);
+  color: white;
+  z-index: 1000;
+  filter: drop-shadow(0.2rem 0.2rem 0.5rem #00000077);
 }
 .control-bar svg {
   margin-right: 0.5rem;
-}
-.control-bar__filter-label {
-  align-items: center;
-  display: flex;
-  padding: 0.75rem 1rem;
 }
 .control-bar__connection-container {
   border-left: solid 1px var(--primary_darker);
@@ -10378,7 +10373,8 @@ main,
 }
 .route-filter {
   color: black;
-  min-width: 360px;
+  min-width: 300px;
+  margin: 0.5rem;
 }
 .about-button {
   bottom: 0;
@@ -10453,19 +10449,18 @@ button {
   body {
     font-size: 0.9rem;
   }
-  .control-bar__filter-label {
-    width: 100%;
-    padding: 0.5rem 0;
-  }
   .route-filter {
     width: 100%;
+  }
+  .route-select-option__wrapper .route-and-icon span {
+    font-size: 1.5rem;
   }
   .control-bar__label-text {
     display: none;
   }
   .control-bar {
     min-width: 100vw;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
   }
   .Modal__content {
     max-width: 90%;
@@ -10495,7 +10490,7 @@ button {
     "Lucida Sans",
     Arial,
     sans-serif;
-  font-size: 2rem;
+  font-size: 1.8rem;
 }
 .route-select-option__wrapper img {
   width: 20px;

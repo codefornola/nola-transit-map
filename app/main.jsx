@@ -290,7 +290,7 @@ class App extends React.Component {
         })
 
         return <div className="control-bar">
-                    <label className="control-bar__filter-label">
+                    {/* <label className="control-bar__filter-label"> */}
                         <Select
                             closeMenuOnSelect={false}
                             components={{ ...selectAnimatedComponents, Option: RouteSelectOption }}
@@ -302,7 +302,7 @@ class App extends React.Component {
                             className="route-filter"
                             placeholder="Select Route(s)"
                         />
-                    </label>
+                    {/*</label>*/}
                     {connectionStatus}
         </div>
     }
