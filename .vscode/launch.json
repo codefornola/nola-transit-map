@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Dev Mode",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "./",
+            "env": {
+                "DEV": "1",
+                "CLEVER_DEVICES_KEY": "DEV",
+                "CLEVER_DEVICES_IP": "DEV"
+            }
+        }
+    ]
+}
