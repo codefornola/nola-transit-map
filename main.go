@@ -23,7 +23,10 @@ const (
 	// Send pings to client with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Use in place of Clever Devices URL when in DEV mode
+	// Time between fetches to Clever Devices Bustime server
+	scraperFetchInterval = 10 * time.Second
+
+	// Use in place of Clever Devices URL when in DEV mode.
 	mockCleverDevicesUrl = "http://localhost:8081/getvehicles"
 
 	// Clever Devices API URL: http://[host:port]/bustime/api/v3/getvehicles
@@ -166,7 +169,7 @@ func NewScraper() *Scraper {
 	}
 	config := &Config{
 		BaseUrl:  baseUrl,
-		Interval: 10 * time.Second,
+		Interval: scraperFetchInterval,
 		Key:      api_key,
 	}
 
