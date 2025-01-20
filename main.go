@@ -32,7 +32,7 @@ const (
 
 	// Append to Clever Devices base url (above).
 	// tmres=m -> time resolution: minute.
-	// rtpidatafeed=bustime -> specify the bustime data feed.
+	// rtpidatafeed=bustime -> specify the Bustime data feed.
 	// format=json -> respond with json (as opposed to XML).
 	cleverDevicesVehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
 )
@@ -349,7 +349,7 @@ func (s *Server) writer(ws *websocket.Conn) {
 }
 
 func (s *Server) serveWs(w http.ResponseWriter, r *http.Request) {
-	log.Println("serving ws")
+	log.Println("Serving ws")
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		if _, ok := err.(websocket.HandshakeError); !ok {
