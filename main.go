@@ -23,7 +23,7 @@ const (
 	// Send pings to client with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Time between fetches to Clever Devices Bustime server
+	// Time between fetches to Clever Devices Bustime server.
 	scraperFetchInterval = 10 * time.Second
 
 	// Use in place of Clever Devices URL when in DEV mode.
