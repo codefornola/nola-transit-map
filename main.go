@@ -23,8 +23,8 @@ const (
 	// Send pings to client with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Wait time before retrying the Clever Devices server on fetch failure
-	scraperRetryInterval = 2 * time.Second
+	// Time between fetches to Clever Devices Bustime server.
+	scraperFetchInterval = 10 * time.Second
 
 	// Use in place of Clever Devices URL when in DEV mode.
 	mockCleverDevicesUrl = "http://localhost:8081/getvehicles"
@@ -35,7 +35,7 @@ const (
 
 	// Append to Clever Devices base url (above).
 	// tmres=m -> time resolution: minute.
-	// rtpidatafeed=bustime -> specify the bustime data feed.
+	// rtpidatafeed=bustime -> specify the Bustime data feed.
 	// format=json -> respond with json (as opposed to XML).
 	cleverDevicesVehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
 )
@@ -169,7 +169,7 @@ func NewScraper() *Scraper {
 	}
 	config := &Config{
 		BaseUrl:  baseUrl,
-		Interval: 10 * time.Second,
+		Interval: scraperFetchInterval,
 		Key:      api_key,
 	}
 
@@ -301,7 +301,7 @@ func (s *Server) Start() {
 	http.Handle("/public/", http.StripPrefix("/public/", fs))
 
 	// Handle websocket connection
-	http.HandleFunc("/ws", s.serveWs)
+	http.HandleFunc("/sse", s.serveSSE)
 
 	log.Println("Starting server")
 	if err := http.ListenAndServe(*addr, nil); err != nil {
@@ -309,68 +309,36 @@ func (s *Server) Start() {
 	}
 }
 
-func (s *Server) reader(ws *websocket.Conn) {
-	defer ws.Close()
-	ws.SetReadLimit(512)
-	//ws.SetReadDeadline(time.Now().Add(pongWait))
-	//ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	for {
-		_, _, err := ws.ReadMessage()
-		if err != nil {
-			break
-		}
-	}
-}
-
-func (s *Server) writeVehicles(ws *websocket.Conn, vehicles []Vehicle) error {
+func (s *Server) writeVehicles(w http.ResponseWriter, vehicles []Vehicle) error {
 	if len(vehicles) > 0 {
 		payload, err := json.Marshal(vehicles)
 		if err != nil {
 			return err
 		}
-		ws.SetWriteDeadline(time.Now().Add(writeWait))
-		err = ws.WriteMessage(websocket.TextMessage, payload)
-		if err != nil {
-			return err
-		}
+		fmt.Fprintf(w, "data: %s\n\n", payload)
 	} else {
 		log.Println("No Vehicles to write")
 	}
 	return nil
 }
 
-func (s *Server) writer(ws *websocket.Conn) {
-	pingTicker := time.NewTicker(pingPeriod)
-	defer func() {
-		pingTicker.Stop()
-		ws.Close()
-	}()
+func (s *Server) serveSSE(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
 
 	vehicleChan := make(VehicleChannel)
 	s.broadcaster.Register(vehicleChan)
 	log.Println("Sending cached vehicles")
-	s.writeVehicles(ws, s.broadcaster.vehicles)
+	s.writeVehicles(w, s.broadcaster.vehicles)
 
 	for vehicles := range vehicleChan {
-		err := s.writeVehicles(ws, vehicles)
+		err := s.writeVehicles(w, vehicles)
 		if err != nil {
 			break
 		}
 	}
-	log.Println("Got close. Stopping WS writer")
-}
-
-func (s *Server) serveWs(w http.ResponseWriter, r *http.Request) {
-	log.Println("serving ws")
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		if _, ok := err.(websocket.HandshakeError); !ok {
-			log.Println(err)
-		}
-		return
-	}
-	go s.writer(ws)
-	s.reader(ws)
+	log.Println("SSE connection closed")
 }
 
 func main() {
