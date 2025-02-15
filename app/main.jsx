@@ -17,11 +17,11 @@ import './main.css';
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
     .features
-    .filter(f => f.geometry.type === "MultiLineString" && f.properties.route_id)
+    .filter(f => f.geometry.type === "GeometryCollection" && f.properties.route_id)
     .reduce((acc, f) => {
         return {
             ...acc,
-            [f.properties.route_id]: <GeoJSON key={f.properties.route_id} data={f} pathOptions={{ color: f.properties.route_color }} />
+            [f.properties.route_id]: <GeoJSON key={f.properties.route_id} data={f} pathOptions={{ color: f.properties.route_color }} pointToLayer={function (feature, latlng) { return L.circleMarker(latlng, {radius: 3, fillColor: f.properties.route_color}); }} />
         }
     }, {})
 

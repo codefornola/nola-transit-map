@@ -29,3 +29,8 @@ __debug_*
 !.vscode/launch.json
 
 .DS_Store
+
+#generated temp route files
+data/route_*
+data/*.txt
+data/*.zip
