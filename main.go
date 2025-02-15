@@ -187,14 +187,22 @@ func NewScraper() *Scraper {
 
 func (s *Scraper) Start(vs chan []Vehicle) {
 	for {
-		result := s.fetch()
+		result, err := s.fetch()
+		if err != nil {
+			log.Printf(
+				"ERROR: Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
+				int(scraperFetchInterval.Seconds()),
+			)
+			time.Sleep(scraperFetchInterval)
+			continue
+		}
 		log.Printf("Found %d vehicles\n", len(result.Vehicles))
 		vs <- result.Vehicles
 		time.Sleep(s.config.Interval)
 	}
 }
 
-func (v *Scraper) fetch() *BustimeData {
+func (v *Scraper) fetch() (*BustimeData, error) {
 	key := v.config.Key
 	baseURL := v.config.BaseUrl
 	url := fmt.Sprintf(cleverDevicesVehicleQueryFormatter, baseURL, key)
@@ -202,6 +210,7 @@ func (v *Scraper) fetch() *BustimeData {
 	resp, err := v.client.Get(url)
 	if err != nil {
 		log.Println("ERROR: Scraper response:", err)
+		return nil, err
 	}
 	if resp.Body != nil {
 		defer resp.Body.Close()
@@ -214,7 +223,7 @@ func (v *Scraper) fetch() *BustimeData {
 	result := &BustimeResponse{}
 	json.Unmarshal(body, result)
 
-	return &result.Data
+	return &result.Data, nil
 }
 
 func (v *Scraper) Close() {
