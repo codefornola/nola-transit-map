@@ -191,9 +191,9 @@ func (s *Scraper) Start(vs chan []Vehicle) {
 		if err != nil {
 			log.Printf(
 				"ERROR: Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
-				int(scraperRetryInterval.Seconds()),
+				int(scraperFetchInterval.Seconds()),
 			)
-			time.Sleep(scraperRetryInterval)
+			time.Sleep(scraperFetchInterval)
 			continue
 		}
 		log.Printf("Found %d vehicles\n", len(result.Vehicles))
