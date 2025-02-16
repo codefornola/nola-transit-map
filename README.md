@@ -54,3 +54,11 @@ Add the API and IP env vars to `make run`:
 ```
 make build && make run CLEVER_DEVICES_KEY=thekey CLEVER_DEVICES_IP=ipaddr
 ```
+
+### To Refresh Route Data:
+When transit agencies modify their routes, you may need to refresh the route geometry data from the agency's [GTFS](https://en.wikipedia.org/wiki/GTFS) feed.
+Run the make_routes.sh script to download this data and convert it into the geojson format used by the frontend.
+```
+cd data
+./make_routes.sh
+```
