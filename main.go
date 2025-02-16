@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"strconv"
 
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
+	"github.com/MobilityData/gtfs-realtime-bindings/golang/gtfs"
 )
 
 const (
@@ -150,6 +153,7 @@ type Config struct {
 
 type Scraper struct {
 	client *http.Client
+	client_jp *http.Client
 	config *Config
 }
 
@@ -178,9 +182,10 @@ func NewScraper() *Scraper {
 		TLSHandshakeTimeout: 0 * time.Second,
 	}
 	client := &http.Client{Transport: tr}
-
+	client_jp := &http.Client{Transport: tr}
 	return &Scraper{
 		client,
+		client_jp,
 		config,
 	}
 }
@@ -190,14 +195,27 @@ func (s *Scraper) Start(vs chan []Vehicle) {
 		result, err := s.fetch()
 		if err != nil {
 			log.Printf(
-				"ERROR: Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
+				"ERROR: RTA Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
 				int(scraperFetchInterval.Seconds()),
 			)
 			time.Sleep(scraperFetchInterval)
 			continue
 		}
-		log.Printf("Found %d vehicles\n", len(result.Vehicles))
-		vs <- result.Vehicles
+		log.Printf("Found %d RTA vehicles\n", len(result.Vehicles))
+
+		result_jp, err := s.fetch_jp()
+		if err != nil {
+			log.Printf(
+				"ERROR: JP Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
+				int(scraperFetchInterval.Seconds()),
+			)
+			time.Sleep(scraperFetchInterval)
+			continue
+		}
+		log.Printf("Found %d JP vehicles\n", len(result_jp.Vehicles))
+
+		vs <- append(result.Vehicles, result_jp.Vehicles...)
+
 		time.Sleep(s.config.Interval)
 	}
 }
@@ -226,8 +244,55 @@ func (v *Scraper) fetch() (*BustimeData, error) {
 	return &result.Data, nil
 }
 
+func (v *Scraper) fetch_jp() (*BustimeData, error) {
+	url := "https://jetapp.jptransit.org/gtfsrt/vehicles"
+	resp, err := v.client_jp.Get(url)
+	if err != nil {
+		log.Printf("error fetching jptransit data: %s [firewall blocking VPN address?]", err)
+		return nil, err
+	}
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	feed := gtfs.FeedMessage{}
+	err = proto.Unmarshal(body, &feed)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	result := &BustimeData{}
+	result.Vehicles = []Vehicle{}
+
+	for _, entity := range feed.Entity {
+		vehicle := entity.GetVehicle()
+		position := vehicle.GetPosition()
+		route := vehicle.GetTrip().GetRouteId()
+		if (len(route) == 0) {
+			route = "U"
+		}
+
+		v := Vehicle{}
+		v.Vid = vehicle.GetVehicle().GetId()
+		v.Tmstmp = VehicleTimestamp{}
+		v.Tmstmp.Time = time.Unix(int64(vehicle.GetTimestamp()), 0)
+		v.Lat = float64(position.GetLatitude())
+		v.Lon = float64(position.GetLongitude())
+		v.Hdg = strconv.FormatFloat(float64(position.GetBearing()), 'f', -1, 64)
+		v.Rt = route
+		result.Vehicles = append(result.Vehicles, v)
+	}
+
+	return result, nil
+}
+
 func (v *Scraper) Close() {
 	v.client.CloseIdleConnections()
+	v.client_jp.CloseIdleConnections()
 }
 
 type VehicleChannel = chan []Vehicle
