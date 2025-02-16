@@ -17,11 +17,11 @@ import './main.css';
 const animatedComponents = makeAnimated();
 const ROUTES = NortaGeoJson
     .features
-    .filter(f => f.geometry.type === "MultiLineString" && f.properties.route_id)
+    .filter(f => f.geometry.type === "GeometryCollection" && f.properties.route_id)
     .reduce((acc, f) => {
         return {
             ...acc,
-            [f.properties.route_id]: <GeoJSON key={f.properties.route_id} data={f} pathOptions={{ color: f.properties.route_color }} />
+            [f.properties.route_id]: <GeoJSON key={f.properties.route_id} data={f} pathOptions={{ color: f.properties.route_color }} pointToLayer={function (feature, latlng) { return L.circleMarker(latlng, {radius: 3, fillColor: f.properties.route_color}); }} />
         }
     }, {})
 
@@ -71,9 +71,6 @@ function timestampDisplay (timestamp) {
     return minutes + ' minutes ago';
 }
 
-const scheme = window.location.protocol == "http:" ? "ws" : "wss"
-const url = `${scheme}://${window.location.hostname}:${window.location.port}/ws`
-const conn = new WebSocket(url);
 
 class App extends React.Component {
     constructor(props) {
@@ -85,36 +82,62 @@ class App extends React.Component {
             connected: false,
             lastUpdate: new Date(),
             now: new Date(),
+            sse: null,
         }
         this.handleRouteChange = this.handleRouteChange.bind(this)
     }
 
     componentWillMount() {
-        conn.onopen = () => {
-            console.log("Websocket Open")
-            this.setState({ connected: true })
-        }
-        conn.onclose = () => {
-            console.log("Closing websocket")
-            this.setState({ connected: false })
-        }
-        conn.onmessage = (evt) => {
-            console.log('onmessage');
-            if (!this.state.connected) this.setState({ connected: true })
-            const vehicles = JSON.parse(evt.data)
-            const lastUpdate = new Date()
-            this.setState({
-                vehicles,
-                lastUpdate,
-            })
-            console.dir(vehicles)
-        }
+        this.connectSSE();
         this.interval = setInterval(() => this.setState({ now: Date.now() }), 1000);
     }
 
     componentWillUnmount() {
+        this.closeSSE();
         clearInterval(this.interval)
     }
+
+    connectSSE = () => {
+        if (!this.state.sse || (this.state.sse && this.state.sse.readyState == EventSource.CLOSED)) {
+			this.setState({ connected: false });
+
+			const url = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/sse`
+			const sse = new EventSource(url);
+
+			sse.onmessage = (evt) => {
+				console.log('SSE message');
+				if (!this.state.connected) this.setState({ connected: true })
+				const vehicles = JSON.parse(evt.data)
+				const lastUpdate = new Date()
+				this.setState({
+					vehicles,
+					lastUpdate,
+				})
+				console.dir(vehicles)
+			};
+
+			sse.onclose = () => {
+				console.log('SSE closed');
+				this.setState({ connected: false });
+			};
+
+			sse.onerror = (error) => {
+				console.error('SSE error:', error);
+				this.setState({ connected: false });
+			};
+
+			this.setState({ sse });
+        }
+
+        //check connection for reconnect every 5s
+        setTimeout(this.connectSSE, 5000);
+    };
+
+    closeSSE = () => {
+        if (this.state.sse) {
+            this.state.sse.close();
+        }
+    };
 
     routeComponents() {
         if (this.state.routes.length === 0) return Object.values(ROUTES)
@@ -163,7 +186,7 @@ class App extends React.Component {
     notConnectedScreen() {
         return <Row className="justify-content-md-center">
             <Col md="auto">
-                <p>Looks like you aren't connected. Maybe try refreshing the page. If it's not working please <a href="https://github.com/codefornola/nola-transit-map/issues">get in touch with us</a>.</p>
+                <p>Connection broken. Attempting to reconnect...</p>
             </Col>
         </Row>
     }

@@ -19,6 +19,18 @@ go.work
 
 node_modules
 
+# Binaries
 nola-transit-map
+server
+__debug_*
+
+.vscode/*
+# Track vscode debugger config
+!.vscode/launch.json
 
 .DS_Store
+
+#generated temp route files
+data/route_*
+data/*.txt
+data/*.zip

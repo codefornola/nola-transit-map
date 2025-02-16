@@ -25,6 +25,22 @@ const (
 
 	// Send pings to client with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
+
+	// Time between fetches to Clever Devices Bustime server.
+	scraperFetchInterval = 10 * time.Second
+
+	// Use in place of Clever Devices URL when in DEV mode.
+	mockCleverDevicesUrl = "http://localhost:8081/getvehicles"
+
+	// Clever Devices API URL: http://[host:port]/bustime/api/v3/getvehicles
+	// http://ride.smtd.org/bustime/apidoc/docs/DeveloperAPIGuide3_0.pdf
+	cleverDevicesUrlFormatter = "https://%s/bustime/api/v3/getvehicles"
+
+	// Append to Clever Devices base url (above).
+	// tmres=m -> time resolution: minute.
+	// rtpidatafeed=bustime -> specify the Bustime data feed.
+	// format=json -> respond with json (as opposed to XML).
+	cleverDevicesVehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
 )
 
 var (
@@ -33,6 +49,8 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
+
+	DEV = false
 )
 
 type VehicleTimestamp struct {
@@ -130,7 +148,7 @@ type BustimeResponse struct {
 type Config struct {
 	Key      string        `yaml:"key"`
 	Interval time.Duration `yaml:"interval"`
-	Url      string        `yaml:"url"`
+	BaseUrl  string        `yaml:"url"`
 }
 
 type Scraper struct {
@@ -149,11 +167,16 @@ func NewScraper() *Scraper {
 		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
 	}
 
+	baseUrl := fmt.Sprintf(cleverDevicesUrlFormatter, ip)
+	if DEV {
+		baseUrl = mockCleverDevicesUrl
+	}
 	config := &Config{
-		Url:      fmt.Sprintf("https://%s/bustime/api/v3/getvehicles", ip),
-		Interval: 10 * time.Second,
+		BaseUrl:  baseUrl,
+		Interval: scraperFetchInterval,
 		Key:      api_key,
 	}
+
 	tr := &http.Transport{
 		MaxIdleConnsPerHost: 1024,
 		TLSHandshakeTimeout: 0 * time.Second,
@@ -169,10 +192,26 @@ func NewScraper() *Scraper {
 
 func (s *Scraper) Start(vs chan []Vehicle) {
 	for {
-		result := s.fetch()
+		result, err := s.fetch()
+		if err != nil {
+			log.Printf(
+				"ERROR: RTA Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
+				int(scraperFetchInterval.Seconds()),
+			)
+			time.Sleep(scraperFetchInterval)
+			continue
+		}
 		log.Printf("Found %d RTA vehicles\n", len(result.Vehicles))
 
-		result_jp := s.fetch_jp()
+		result_jp, err := s.fetch_jp()
+		if err != nil {
+			log.Printf(
+				"ERROR: JP Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
+				int(scraperFetchInterval.Seconds()),
+			)
+			time.Sleep(scraperFetchInterval)
+			continue
+		}
 		log.Printf("Found %d JP vehicles\n", len(result_jp.Vehicles))
 
 		vs <- append(result.Vehicles, result_jp.Vehicles...)
@@ -181,35 +220,36 @@ func (s *Scraper) Start(vs chan []Vehicle) {
 	}
 }
 
-func (v *Scraper) fetch() *BustimeData {
+func (v *Scraper) fetch() (*BustimeData, error) {
 	key := v.config.Key
-	baseURL := v.config.Url
-	url := fmt.Sprintf("%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json", baseURL, key)
+	baseURL := v.config.BaseUrl
+	url := fmt.Sprintf(cleverDevicesVehicleQueryFormatter, baseURL, key)
+	log.Println("Scraper URL:", url)
 	resp, err := v.client.Get(url)
+	if err != nil {
+		log.Println("ERROR: Scraper response:", err)
+		return nil, err
+	}
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
-	if err != nil {
-		log.Println(err)
-	}
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
-		log.Fatal(readErr)
+		log.Fatal("ERROR: Scraper response reader:", readErr)
 	}
 
 	result := &BustimeResponse{}
 	json.Unmarshal(body, result)
 
-	return &result.Data
+	return &result.Data, nil
 }
 
-func (v *Scraper) fetch_jp() *BustimeData {
+func (v *Scraper) fetch_jp() (*BustimeData, error) {
 	url := "https://jetapp.jptransit.org/gtfsrt/vehicles"
 	resp, err := v.client_jp.Get(url)
 	if err != nil {
 		log.Printf("error fetching jptransit data: %s [firewall blocking VPN address?]", err)
-		result := &BustimeResponse{}
-		return &result.Data
+		return nil, err
 	}
 	if resp.Body != nil {
 		defer resp.Body.Close()
@@ -247,7 +287,7 @@ func (v *Scraper) fetch_jp() *BustimeData {
 		result.Vehicles = append(result.Vehicles, v)
 	}
 
-	return result
+	return result, nil
 }
 
 func (v *Scraper) Close() {
@@ -279,10 +319,9 @@ func (b *VehicleBroadcaster) Unregister(c VehicleChannel) {
 }
 
 func (b *VehicleBroadcaster) Start() {
-	//config := bustime.GetConfig()
 	scraper := NewScraper()
 	defer scraper.Close()
-	log.Println("start sraper")
+	log.Println("Starting scraper")
 	go scraper.Start(b.incoming)
 	b.broadcast()
 }
@@ -327,7 +366,7 @@ func (s *Server) Start() {
 	http.Handle("/public/", http.StripPrefix("/public/", fs))
 
 	// Handle websocket connection
-	http.HandleFunc("/ws", s.serveWs)
+	http.HandleFunc("/sse", s.serveSSE)
 
 	log.Println("Starting server")
 	if err := http.ListenAndServe(*addr, nil); err != nil {
@@ -335,71 +374,44 @@ func (s *Server) Start() {
 	}
 }
 
-func (s *Server) reader(ws *websocket.Conn) {
-	defer ws.Close()
-	ws.SetReadLimit(512)
-	//ws.SetReadDeadline(time.Now().Add(pongWait))
-	//ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	for {
-		_, _, err := ws.ReadMessage()
-		if err != nil {
-			break
-		}
-	}
-}
-
-func (s *Server) writeVehicles(ws *websocket.Conn, vehicles []Vehicle) error {
+func (s *Server) writeVehicles(w http.ResponseWriter, vehicles []Vehicle) error {
 	if len(vehicles) > 0 {
 		payload, err := json.Marshal(vehicles)
 		if err != nil {
 			return err
 		}
-		ws.SetWriteDeadline(time.Now().Add(writeWait))
-		err = ws.WriteMessage(websocket.TextMessage, payload)
-		if err != nil {
-			return err
-		}
+		fmt.Fprintf(w, "data: %s\n\n", payload)
 	} else {
 		log.Println("No Vehicles to write")
 	}
 	return nil
 }
 
-func (s *Server) writer(ws *websocket.Conn) {
-	pingTicker := time.NewTicker(pingPeriod)
-	defer func() {
-		pingTicker.Stop()
-		ws.Close()
-	}()
+func (s *Server) serveSSE(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
 
 	vehicleChan := make(VehicleChannel)
 	s.broadcaster.Register(vehicleChan)
 	log.Println("Sending cached vehicles")
-	s.writeVehicles(ws, s.broadcaster.vehicles)
+	s.writeVehicles(w, s.broadcaster.vehicles)
 
 	for vehicles := range vehicleChan {
-		err := s.writeVehicles(ws, vehicles)
+		err := s.writeVehicles(w, vehicles)
 		if err != nil {
 			break
 		}
 	}
-	log.Println("Got close. Stopping WS writer")
-}
-
-func (s *Server) serveWs(w http.ResponseWriter, r *http.Request) {
-	log.Println("serving ws")
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		if _, ok := err.(websocket.HandshakeError); !ok {
-			log.Println(err)
-		}
-		return
-	}
-	go s.writer(ws)
-	s.reader(ws)
+	log.Println("SSE connection closed")
 }
 
 func main() {
+	if _, exists := os.LookupEnv("DEV"); exists {
+		DEV = true
+		log.Println("Set to DEV mode.")
+	}
+
 	server := NewServer()
 	server.Start()
 }
