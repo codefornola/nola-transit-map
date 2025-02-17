@@ -1,14 +1,17 @@
-
 body {
     padding: 0;
     margin: 0;
 }
-html, body, #main, main, .App, .leaflet-container {
+
+html,
+body,
+#main,
+main,
+.App,
+.leaflet-container {
     height: 100%;
     width: 100vw;
 }
-/* Need this hack to get transparency to work */
-.leaflet-marker-icon { background-color: transparent; border-color: transparent }
 
 :root {
     --primary: #7A278D;
@@ -25,15 +28,19 @@ html, body, #main, main, .App, .leaflet-container {
 }
 
 .control-bar {
-    align-items: center;
-    background: var(--primary);
-    justify-content: space-between;
-    display: flex;
-    color: white;
     position: absolute;
     min-width: 35vw;
-    z-index: 1000;
     border-radius: 0 0 10px 0px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    background: var(--primary);
+    color: white;
+    z-index: 1000;
+
+    filter: drop-shadow(0.2rem 0.2rem 0.5rem #00000077)
 }
 
 
@@ -41,11 +48,11 @@ html, body, #main, main, .App, .leaflet-container {
     margin-right: 0.5rem;
 }
 
-.control-bar__filter-label {
-    align-items: center;
-    display: flex;
-    padding: 0.75rem 1rem;
-}
+/* .control-bar__filter-label { */
+/* align-items: center; */
+/* display: flex; */
+/* padding: 0.75rem 1rem; */
+/* } */
 
 .control-bar__connection-container {
     border-left: solid 1px var(--primary_darker);
@@ -66,8 +73,12 @@ html, body, #main, main, .App, .leaflet-container {
 }
 
 .route-filter {
-    margin-left: 1rem;
+    /* margin-left: 1rem; */
     color: black;
+
+    min-width: 300px;
+
+    margin: 0.5rem;
 }
 
 .about-button {
@@ -145,6 +156,7 @@ button {
     .control-bar {
         min-width: 45vw;
     }
+
     .Modal__content {
         max-width: 75%;
     }
@@ -154,20 +166,27 @@ button {
     body {
         font-size: 0.9rem;
     }
-    .control-bar__filter-label {
-        width: 100%;
-        padding: 0.5rem 0;
-    }
-    
+
+    /* .control-bar__filter-label { */
+    /* width: 100%; */
+    /* padding: 0.5rem 0; */
+    /* } */
+
     .route-filter {
         width: 100%;
     }
+
+    .route-select-option__wrapper .route-and-icon span {
+        font-size: 1.5rem;
+    }
+
     .control-bar__label-text {
         display: none;
     }
+
     .control-bar {
         min-width: 100vw;
-        font-size: 0.75rem;
+        font-size: 0.9rem;
     }
 
     .Modal__content {
@@ -175,8 +194,30 @@ button {
         margin-top: 15%;
         font-size: 0.9rem;
     }
+
     .about-button {
         font-size: 0.7rem;
         padding: 0.5rem 0.75rem;
     }
+}
+
+.route-select-option__wrapper {
+    display: grid;
+    grid-template-columns: min-content auto;
+    align-items: center;
+    gap: 1rem;
+}
+
+.route-select-option__wrapper .route-and-icon {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-size: 1.8rem;
+}
+
+.route-select-option__wrapper img {
+    width: 20px;
+    height: 20px;
 }

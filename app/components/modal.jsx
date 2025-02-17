@@ -11,17 +11,17 @@ function CustomModal(props) {
     return(
         <div>
             <button onClick={handleShow} className="about-button">{props.buttonText}</button>
-            {show ?(
-            <div class="Modal">
-                <aside class="Modal__content">
-                    <div class="Modal__content--header">
+            {show ? (
+            <div className="Modal">
+                <aside className="Modal__content">
+                    <div className="Modal__content--header">
                         <h2>{props.title}</h2>
                         <p>{props.subtitle}</p>
                     </div>
                         <p>
                             {props.content}
                         </p>
-                    <div class="Modal__content--footer">
+                    <div className="Modal__content--footer">
                         <Button onClick={handleClose}>
                         Close
                         </Button>
