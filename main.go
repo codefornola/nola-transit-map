@@ -41,6 +41,13 @@ const (
 	// rtpidatafeed=bustime -> specify the Bustime data feed.
 	// format=json -> respond with json (as opposed to XML).
 	cleverDevicesVehicleQueryFormatter = "%s?key=%s&tmres=m&rtpidatafeed=bustime&format=json"
+
+	// JP Transit GTFS URL
+	// returns GTFS data as a protobuf (unless debug http param is set, in that case json)
+	jpTransitUrl = "https://jetapp.jptransit.org/gtfsrt/vehicles"
+
+	// Use in place of JP Transit URL when in DEV mode.
+	mockJpTransitUrl = "http://localhost:8081/vehicles_jp"
 )
 
 var (
@@ -146,9 +153,10 @@ type BustimeResponse struct {
 }
 
 type Config struct {
-	Key      string        `yaml:"key"`
-	Interval time.Duration `yaml:"interval"`
-	BaseUrl  string        `yaml:"url"`
+	Key        string        `yaml:"key"`
+	Interval   time.Duration `yaml:"interval"`
+	BaseUrlRTA string        `yaml:"url"`
+	BaseUrlJP  string        `yaml:"url"`
 }
 
 type Scraper struct {
@@ -167,14 +175,17 @@ func NewScraper() *Scraper {
 		panic("Need to set environment variable CLEVER_DEVICES_KEY. Try `make run CLEVER_DEVICES_KEY=thekey`. Get key from Ben on slack")
 	}
 
-	baseUrl := fmt.Sprintf(cleverDevicesUrlFormatter, ip)
+	baseUrlRTA := fmt.Sprintf(cleverDevicesUrlFormatter, ip)
+	baseUrlJP  := jpTransitUrl
 	if DEV {
-		baseUrl = mockCleverDevicesUrl
+		baseUrlRTA = mockCleverDevicesUrl
+		baseUrlJP  = mockJpTransitUrl
 	}
 	config := &Config{
-		BaseUrl:  baseUrl,
-		Interval: scraperFetchInterval,
-		Key:      api_key,
+		BaseUrlRTA: baseUrlRTA,
+		BaseUrlJP:  baseUrlJP,
+		Interval:   scraperFetchInterval,
+		Key:        api_key,
 	}
 
 	tr := &http.Transport{
@@ -192,26 +203,10 @@ func NewScraper() *Scraper {
 
 func (s *Scraper) Start(vs chan []Vehicle) {
 	for {
-		result, err := s.fetch()
-		if err != nil {
-			log.Printf(
-				"ERROR: RTA Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
-				int(scraperFetchInterval.Seconds()),
-			)
-			time.Sleep(scraperFetchInterval)
-			continue
-		}
+		result := s.fetch()
 		log.Printf("Found %d RTA vehicles\n", len(result.Vehicles))
 
-		result_jp, err := s.fetch_jp()
-		if err != nil {
-			log.Printf(
-				"ERROR: JP Scraper: Could not reach the Clever Devices server. Trying again in %d seconds. \n",
-				int(scraperFetchInterval.Seconds()),
-			)
-			time.Sleep(scraperFetchInterval)
-			continue
-		}
+		result_jp := s.fetch_jp()
 		log.Printf("Found %d JP vehicles\n", len(result_jp.Vehicles))
 
 		vs <- append(result.Vehicles, result_jp.Vehicles...)
@@ -220,49 +215,53 @@ func (s *Scraper) Start(vs chan []Vehicle) {
 	}
 }
 
-func (v *Scraper) fetch() (*BustimeData, error) {
+func (v *Scraper) fetch() (*BustimeData) {
 	key := v.config.Key
-	baseURL := v.config.BaseUrl
+	baseURL := v.config.BaseUrlRTA
 	url := fmt.Sprintf(cleverDevicesVehicleQueryFormatter, baseURL, key)
 	log.Println("Scraper URL:", url)
 	resp, err := v.client.Get(url)
 	if err != nil {
 		log.Println("ERROR: Scraper response:", err)
-		return nil, err
+		return &BustimeData{}
 	}
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	body, readErr := ioutil.ReadAll(resp.Body)
 	if readErr != nil {
-		log.Fatal("ERROR: Scraper response reader:", readErr)
+		log.Println("ERROR: Scraper response reader:", readErr)
+		return &BustimeData{}
 	}
 
 	result := &BustimeResponse{}
 	json.Unmarshal(body, result)
 
-	return &result.Data, nil
+	return &result.Data
 }
 
-func (v *Scraper) fetch_jp() (*BustimeData, error) {
-	url := "https://jetapp.jptransit.org/gtfsrt/vehicles"
+func (v *Scraper) fetch_jp() (*BustimeData) {
+	url := v.config.BaseUrlJP
+	log.Println("Scraper URL:", url)
 	resp, err := v.client_jp.Get(url)
 	if err != nil {
-		log.Printf("error fetching jptransit data: %s [firewall blocking VPN address?]", err)
-		return nil, err
+		log.Printf("ERROR: while fetching jptransit data: %s [firewall blocking VPN address?]", err)
+		return &BustimeData{}
 	}
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("ERROR: Scraper response reader:", err)
+		return &BustimeData{}
 	}
 
 	feed := gtfs.FeedMessage{}
 	err = proto.Unmarshal(body, &feed)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("ERROR: Scraper response parsing:", err)
+		return &BustimeData{}
 	}
 
 	result := &BustimeData{}
@@ -287,7 +286,7 @@ func (v *Scraper) fetch_jp() (*BustimeData, error) {
 		result.Vehicles = append(result.Vehicles, v)
 	}
 
-	return result, nil
+	return result
 }
 
 func (v *Scraper) Close() {
