@@ -8,20 +8,55 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import NortaGeoJson from '../data/routes.json';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Select from 'react-select'
+import Select, { components as SelectComponents } from 'react-select'
 import makeAnimated from 'react-select/animated';
 import CustomModal from './components/modal';
 import LocationMarker from './components/location';
 import './main.css';
 
-const animatedComponents = makeAnimated();
-const ROUTES = NortaGeoJson
+import busIconMap from '../img/icon_bus_fill_circle.png'
+import busIconSelect from '../img/icon_bus_fill_black.png'
+import streetcarIconMap from '../img/icon_streetcar_fill_circle.png'
+import streetcarIconSelect from '../img/icon_streetcar_fill_black.png'
+// TODO: awaiting real ferry icon
+import ferryIcon from '../img/icon_mock_ferry.png'
+import errorIcon from '../img/icon_vehicle_error.png'
+import arrowIcon from '../img/icon_arrow_offset.png'
+
+
+const VALID_ROUTES = NortaGeoJson
     .features
     .filter(f => f.geometry.type === "GeometryCollection" && f.properties.route_id)
+
+const ROUTE_ELEMS = VALID_ROUTES
     .reduce((acc, f) => {
         return {
             ...acc,
             [f.properties.route_id]: <GeoJSON key={f.properties.route_id} data={f} pathOptions={{ color: f.properties.route_color }} pointToLayer={function (feature, latlng) { return L.circleMarker(latlng, {radius: 3, fillColor: f.properties.route_color}); }} />
+        }
+    }, {})
+
+// Used in creation of options for dropdown & map markers
+const ROUTE_INFO = VALID_ROUTES
+    .reduce((acc, f) => {
+        const { route_long_name, route_type, route_color: color } = f.properties
+        let name = route_long_name ?? ''
+        let type = 'error'
+        if (route_type == 3) {
+            type = 'bus'
+            if (!name.toLowerCase().endsWith('bus')) name += ' Bus'
+        }
+        if (route_type == 0) {
+            type = 'streetcar'
+            if (!name.toLowerCase().endsWith('streetcar')) name += ' Streetcar'
+        }
+        if (route_type == 4) {
+            type = 'ferry'
+            if (!name.toLowerCase().endsWith('ferry')) name += ' Ferry'
+        }
+        return {
+            ...acc,
+            [f.properties.route_id]: { name, type, color }
         }
     }, {})
 
@@ -63,7 +98,91 @@ const RotatedMarker = forwardRef(({ children, ...props }, forwardRef) => {
     );
 });
 
-function timestampDisplay (timestamp) {
+/*
+These routes don't exist at NORTA.com
+When a vehicle enters its garage, its route becomes 'U'
+The definition of PO and PI routes is unknown -> filter out for now
+Note: The U route designation applies to both vehicles in the garage
+(not in service) and a selection of 24-hour routes that are not in
+the garage and running their normal route between 12:30am-ish and
+4:00am-sh.
+*/
+const NOT_IN_SERVICE_ROUTES = ['PO', 'PI']
+
+const MARKER_ICON_SIZE = 24 // ? pt or px
+
+const DROPDOWN_ICON_IMG = Object.freeze({
+    ferry: ferryIcon,
+    streetcar: streetcarIconSelect,
+    bus: busIconSelect,
+    error: errorIcon,
+})
+
+const ICON_ARROW = new L.Icon({
+    iconUrl: arrowIcon,
+    iconRetinaUrl: arrowIcon,
+    // Tall so arrow doesn't intersect vehicle (&& match aspect ratio of graphic)
+    iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE * 2],
+    className: 'leaflet-marker-icon'
+});
+
+function ArrowMarker(props) {
+    const { rotationAngle } = props;
+    const markerRef = useRef();
+
+    useEffect(() => {
+        markerRef.current?.setRotationAngle(rotationAngle);
+    }, [rotationAngle]);
+    return <Marker ref={markerRef} {...props} icon={ICON_ARROW} rotationOrigin="center" />;
+}
+
+function newVehicleMapIcon(image) {
+    return new L.Icon({
+        iconUrl: image,
+        iconRetinaUrl: image,
+        iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE],
+        className: 'leaflet-marker-icon'
+    });
+}
+
+const VEHICLE_MARKER_ICONS = Object.freeze({
+    ferry: newVehicleMapIcon(ferryIcon),
+    streetcar: newVehicleMapIcon(streetcarIconMap),
+    bus: newVehicleMapIcon(busIconMap),
+    error: newVehicleMapIcon(errorIcon),
+})
+
+function VehicleMarker({ children, ...props }) {
+    const { type } = props
+    return (
+        <Marker {...props} icon={VEHICLE_MARKER_ICONS[type]} riseOnHover={true}>
+            {children}
+        </Marker>
+    )
+}
+
+// React Select animations
+const selectAnimatedComponents = makeAnimated()
+
+const { Option: SelectOption } = SelectComponents
+
+// custom React Select option - add icons and route colors to route options
+function RouteSelectOption(props) {
+    const { data: { value, name, icon, color } } = props
+    return (
+        <SelectOption {...props}>
+            <div className="route-select-option__wrapper">
+                <div className="route-and-icon">
+                    <span style={{ color }}>{value}</span>
+                    <img src={icon} alt={name}/>
+                </div>
+                <span>{name}</span>
+            </div>
+        </SelectOption>
+    )
+}
+
+function timestampDisplay(timestamp) {
     const relativeTimestamp = new Date() - new Date(timestamp);
     if (relativeTimestamp < 60000) { return 'less than a minute ago'; }
     const minutes = Math.round(relativeTimestamp / 60000);
@@ -140,11 +259,11 @@ class App extends React.Component {
     };
 
     routeComponents() {
-        if (this.state.routes.length === 0) return Object.values(ROUTES)
+        if (this.state.routes.length === 0) return Object.values(ROUTE_ELEMS)
 
         return this.state.routes
             .map(r => r.value)
-            .map(rid => ROUTES[rid])
+            .map(rid => ROUTE_ELEMS[rid])
             .filter(r => r !== null)
     }
 
@@ -162,6 +281,21 @@ class App extends React.Component {
                 const coords = [v.lat, v.lon].map(parseFloat)
                 const rotAng = parseInt(v.hdg, 10)
                 const relTime = timestampDisplay(v.tmstmp)
+/*
+                const type = ROUTE_INFO[v.rt]?.type ?? 'error'
+                return (
+                    <div key={v.vid + '_container'}>
+                        <ArrowMarker key={v.vid + '_arrow'} position={coords} rotationAngle={rotAng} />
+                        <VehicleMarker key={v.vid} type={type} position={coords}>
+                            <Popup>
+                                {v.rt}{v.des ? ' - ' + v.des.replace('>>', 'to') : ''}
+                                <br/>
+                                {relTime}
+                            </Popup>
+                        </VehicleMarker>
+                    </div>
+                )
+*/
                 return <RotatedMarker key={v.vid} position={coords} icon={iconVehicle} rotationAngle={rotAng} rotationOrigin="center">
                     <Popup>
                         {v.rt}{v.des ? ' - ' + v.des : ''}
@@ -194,10 +328,10 @@ class App extends React.Component {
     buildControlBar() {
         let connectionStatus = this.state.connected 
             ? <React.Fragment>
-                <span className="control-bar__connection-container connected"><BsFillCircleFill /><span class="control-bar__label-text">Connected</span></span>
+                <span className="control-bar__connection-container connected"><BsFillCircleFill /><span className="control-bar__label-text">Connected</span></span>
               </React.Fragment> 
             : <React.Fragment>
-                <span className="control-bar__connection-container not-connected"><BsFillCloudSlashFill /><span class="control-bar__label-text">Not Connected</span></span>
+                <span className="control-bar__connection-container not-connected"><BsFillCloudSlashFill /><span className="control-bar__label-text">Not Connected</span></span>
               </React.Fragment>
 
         if (this.state.connected && this.lagging()) connectionStatus = 
@@ -215,25 +349,35 @@ class App extends React.Component {
             </Row>
         }
 
+        function compare(a, b) {
+            return ('' + a.label).localeCompare(b.label, 'en', { numeric: true });
+        }
         const routes = [...new Set(this.state.vehicles.map(v => v.rt))]
-        const routeOptions = routes.map(r => {
-            return { value: r, label: r }
-        })
+        const routeOptions = routes.map(rt => {
+            // route name is route id if routes.json is unaware of the route
+            let { name, type, color } = ROUTE_INFO[rt]
+                ?? { name: rt, type: 'error', color: '#000000'}
+            if (color == "#ffffff") color = "#000000"
+            if (rt == "PI" || rt == "PO" || rt == "U") name = "Unknown"
+            const icon = DROPDOWN_ICON_IMG[type] ?? DROPDOWN_ICON_IMG['bus']
+            
+            return { value: rt, label: rt, name, icon, color }
+        }).sort(compare)
 
-        return <div class="control-bar">
-                    <label class="control-bar__filter-label"><span class="control-bar__label-text">Filter Routes:</span>
+        return <div className="control-bar">
+                    {/* <label className="control-bar__filter-label"> */}
                         <Select
                             closeMenuOnSelect={false}
-                            components={animatedComponents}
+                            components={{ ...selectAnimatedComponents, Option: RouteSelectOption }}
                             defaultValue={[]}
                             value={this.state.routes}
                             isMulti
                             options={routeOptions}
                             onChange={this.handleRouteChange}
                             className="route-filter"
-                            placeholder="Filter Select Route(s)"
+                            placeholder="Select Route(s)"
                         />
-                    </label>
+                    {/*</label>*/}
                     {connectionStatus}
         </div>
     }
