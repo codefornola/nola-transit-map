@@ -221,3 +221,13 @@ button {
     width: 20px;
     height: 20px;
 }
+
+.rounded-icon{
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 15px;
+  border: 2px solid #000000;
+  text-align: center;
+  color: #000000;
+  background-color: #ffffff;
+}

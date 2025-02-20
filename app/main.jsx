@@ -152,10 +152,25 @@ const VEHICLE_MARKER_ICONS = Object.freeze({
     error: newVehicleMapIcon(errorIcon),
 })
 
+function newVehicleRouteMapIcon(route) {
+    var fontsize = '18px';
+    if (route.length > 1) fontsize = '15px';
+    if (route.length > 3) fontsize = '10px';
+    var icon = new L.divIcon({
+        html: '<div style="font-size:' + fontsize + '">' + route + '</div>',
+        iconSize: [MARKER_ICON_SIZE, MARKER_ICON_SIZE],
+	fontSize: fontsize,
+        className: 'rounded-icon',
+    });
+    return icon;
+}
+
 function VehicleMarker({ children, ...props }) {
-    const { type } = props
+    const { route, type } = props
+
     return (
-        <Marker {...props} icon={VEHICLE_MARKER_ICONS[type]} riseOnHover={true}>
+        /* <Marker {...props} icon={VEHICLE_MARKER_ICONS[type]} riseOnHover={true}> */
+        <Marker {...props} icon={newVehicleRouteMapIcon(route)} riseOnHover={true}>
             {children}
         </Marker>
     )
@@ -281,12 +296,12 @@ class App extends React.Component {
                 const coords = [v.lat, v.lon].map(parseFloat)
                 const rotAng = parseInt(v.hdg, 10)
                 const relTime = timestampDisplay(v.tmstmp)
-/*
+
                 const type = ROUTE_INFO[v.rt]?.type ?? 'error'
                 return (
                     <div key={v.vid + '_container'}>
                         <ArrowMarker key={v.vid + '_arrow'} position={coords} rotationAngle={rotAng} />
-                        <VehicleMarker key={v.vid} type={type} position={coords}>
+                        <VehicleMarker key={v.vid} type={type} position={coords} route={v.rt}>
                             <Popup>
                                 {v.rt}{v.des ? ' - ' + v.des.replace('>>', 'to') : ''}
                                 <br/>
@@ -295,13 +310,14 @@ class App extends React.Component {
                         </VehicleMarker>
                     </div>
                 )
-*/
+/*
                 return <RotatedMarker key={v.vid} position={coords} icon={iconVehicle} rotationAngle={rotAng} rotationOrigin="center">
                     <Popup>
                         {v.rt}{v.des ? ' - ' + v.des : ''}
                         <br/>{relTime}
                     </Popup>
                 </RotatedMarker>
+*/
             })
     }
 
