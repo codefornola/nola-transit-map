@@ -3,6 +3,7 @@
 #init list of routes
 cat > routes.json << EOF
 {
+ "sources": [],
  "type": "FeatureCollection",
  "name": "routes",
  "crs": {
@@ -24,6 +25,15 @@ add_features_from_GTFS () {
 
   #routes.txt lists as '53-O', but shapes.txt has it as just 53. fix it here
   routes=${routes/53-O/53}
+
+  #add source of data
+  cat feed_info.txt | sed 's/\r$//' |
+    jq -c -R -s -f <(cat << EOF
+      include "csv2json"; csv2json | .[0]
+EOF
+  ) > route_source
+  jq -c '.sources += $source' routes.json --slurpfile source route_source > routes.json.tmp
+  mv routes.json.tmp routes.json
 
   for route in $routes; do
     echo "ROUTE $route"
@@ -96,4 +106,4 @@ echo "=== RTA ==="
 add_features_from_GTFS https://www.norta.com/RTA/media/GTFS/GTFS.zip
 
 echo "=== JP TRANSIT ==="
-add_features_from_GTFS https://rideneworleans.org/wp/wp-content/uploads/GTFS-JET-20240913.zip
+add_features_from_GTFS https://rideneworleans.org/wp-content/uploads/GTFS-JET-20250723.zip
