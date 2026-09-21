@@ -192,8 +192,10 @@ func NewScraper() *Scraper {
 		MaxIdleConnsPerHost: 1024,
 		TLSHandshakeTimeout: 0 * time.Second,
 	}
-	client := &http.Client{Transport: tr}
-	client_jp := &http.Client{Transport: tr}
+	client := &http.Client{Transport: tr,
+                               Timeout: 3 * time.Second}
+	client_jp := &http.Client{Transport: tr,
+                                  Timeout: 3 * time.Second}
 	return &Scraper{
 		client,
 		client_jp,
