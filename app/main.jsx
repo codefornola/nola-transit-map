@@ -23,7 +23,6 @@ import streetcarIconSelect from '../img/icon_streetcar_fill_black.png'
 import ferryIcon from '../img/icon_mock_ferry.png'
 import errorIcon from '../img/icon_vehicle_error.png'
 import arrowIcon from '../img/icon_arrow_offset.png'
-
 import basicArrow from '../img/arrow.png'
 
 const VALID_ROUTES = NortaGeoJson
